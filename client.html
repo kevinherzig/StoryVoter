@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <style>
+      body {
+        font-family: Tahoma, Geneva, sans-serif;
+      }
+
+      div {
+        display: inline;
+      }
+    </style>
+<script>
+      var client;
+
+      var session = {
+        teamName: "The A-Team",
+        currentTopic: "Topic"
+
+      }
+ 
+      function sendToServer() {
+        session.teamName = document.getElementById('xxx').value;
+        ws.send(JSON.stringify(session));
+      }
+      function updateStats(memuse) {
+        document.getElementById('xxx').value = memuse.teamName;
+        //document.getElementById('heapTotal').innerHTML = memuse.heapTotal;
+        //document.getElementById('heapUsed').innerHTML = memuse.heapUsed;
+      }
+
+      var host = window.document.location.host.replace(/:.*/, '');
+      var ws = new WebSocket('ws://' + host + ':8080');
+      ws.onmessage = function (event) {
+        updateStats(JSON.parse(event.data));
+      };
+    </script>
+</head>
+
+<body>
+  <strong>Server Stats</strong><br> RSS:
+  <div id='rss'></div><br> Heap total: <input id='xxx' onkeyup="sendToServer();"></div><br> Heap used:
+<div id='heapUsed'></div><br>
+<button id='bn1' onclick="sendToServer();">send</button>
+</body>
+
+</html>

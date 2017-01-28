@@ -1,0 +1,16 @@
+{
+  "name": "votr",
+  "version": "1.0.0",
+  "description": "Agile Live Voting engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kevin Herzig",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.14.0",
+    "serve-static": "1.11.1",
+    "ws": "1.1.1"
+  }
+}
