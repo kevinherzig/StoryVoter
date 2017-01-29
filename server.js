@@ -1,32 +1,110 @@
-var WebSocketServer = require('serve-static').Server;
+var staticserver = require('serve-static').Server;
 var express = require('express');
 var path = require('path');
-var app = express();
+
 var server = require('http').createServer();
-
-app.use(express.static(path.join(__dirname, '/public')));
-
+var ws = require("ws");
 
 
-server.on('request', app);
+var cookieParser = require('cookie-parser')
+//const NodeCache = require("node-cache");
+const uuidV4 = require('uuid');
 
-server.listen(8080, function () {
-  console.log('Listening on http://localhost:8080');
+// 3 Hour expiration time
+const sessionExpire = 3 * 60 * 60
+var nextSessionId = 1;
+//const myCache = new NodeCache({ stdTTL: sessionExpire });
+//var model = require('model.js');
+
+//////////////////////////////////////  EXPRESS SERVER STARTUP
+
+var app = express();
+app.use(cookieParser())
+app.use(attach_votr_cookie);
+
+app.listen(8000, function () {
+  console.log('Express listening on http://localhost:8000');
 });
-var session = {
-  sessionId: -1,
-  currentTopic: "Topic"
+
+//////////////////////////////////////  Process Routes
+
+app.get('', (req, res) => {
+ res.sendFile('index.html', {root:'.'});
+})
+
+// Client request for a new session id
+app.get("/session/new", (req, res) => {
+  res.write(JSON.stringify(nextSessionId++));
+});
+
+// Client connected to a session, set a cooookie
+app.get("/session/:id", (req, res) => {
+   res.sendFile('client.html', {root: '.'});
+});
+
+
+
+// Client connected to /session manually, redirct them to a new session id
+app.get("/session", (req, res) => {
+const newSession = nextSessionId++;
+res.redirect('/session/' + newSession);
+});
+
+
+
+//////////////////////////////////////  SOCKET SERVER STARTUP
+
+const wss = new ws.Server({perMessageDeflate: false, port: 8001} , () => {console.log('Sockets server listening on port 8001');});
+
+   function attach_votr_cookie(req, res, next) {
+    if(req.cookies.votr_user == undefined)
+      res.cookie("votr_user", uuidV4());
+    next();
+  }
+
+//////////////////////////////////////  GET OR CREATE A SESSION
+function GetSession(sessionId) {
+  if (sessionId = -1)
+    sessionId = nextSessionId++;
+
+  var session = myCache.get(sessionId)
+
+  if (session == undefined) {
+    session = model.GetNewSession();
+    session.sessionId = sessionId;
+    myCache.set(sessionid, session);
+  }
+  return session;
+}
+
+//////////////////////////////////////  BROADCAST CLIENT MESSAGE
+
+function BroadcastMessage(m) {
+  wss.clients.forEach((client) => {
+    if (client.readyState === WebSocket.OPEN)
+      client.send(data);
+  });
+}
+//////////////////////////////////////  PROCESS A CLIENT MESSAGE
+
+function ProcessClientMessage(m) {
+  // What kind of message do we have?
+
+
+
+  if (m.sessionId == undefined)
+    return;
+
+  var session = GetSession(m.sessionId);
+
+
 }
 
 
-
+//////////////////////////////////////  HANDLE AN INCOMING MESSAGE
 wss.on('connection', function connection(ws) {
-  wss.on('message', function incoming(data) {
-    // Broadcast to everyone else.
-    wss.clients.forEach(function each(client) {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(data);
-      }
-    });
-  });
+  wss.on('message', ProcessClientMessage(data));
+
 });
+
+
