@@ -6,95 +6,192 @@
       body {
         font-family: Tahoma, Geneva, sans-serif;
       }
-
       div {
         display: inline;
       }
     </style>
-    <script src="js.cookie.js"></script>
-
+<script src="/js.cookie.js"></script>
 <script>
 
+  //////////////////////////////////////  MESSAGE STRUCTURE
+  var message = {
+    sessionId: -1,
+    clientId: -1,
+    command: "NOCOMMAND",
+    value: -1,
+    timestamp: Date.now()
+  }
+  //////////////////////////////////////  PAGE INIT HANDLER
 
+var clientId = "0";
   function InitDocument() {
 
     // Extract the client id assigned by the server
-    const clientId = Cookies.get('votr_user');
-    document.getElementById('cookieId').textContent =  clientId;
+    clientId = Cookies.get('votr_user');
+    SetSessionId();
+    document.getElementById('cookieId').textContent = "Client Id: " + clientId;
+    SetupSockets();
 
-    // Get the session id from the URL
-    const uri = parseUri(document.URL);
-
+ 
   }
+
+  //////////////////////////////////////  PAGE MESSAGE GENERATORS
+
+  function SendVote(voteValue) {
+    message.command = "VOTE";
+    message.value = voteValue;
+    sendToServer();
+  }
+
+  function SendHideAll() {
+    message.command = HIDEALL;
+    message.value = undefined;
+    sendToServer()
+  }
+
+  function SendClearAll() {
+    message.command = "CLEARALL";
+    message.value = undefined;
+    sendToServer();
+  }
+
+  function SendShowAllVotes() {
+    message.command = "SHOWALL";
+    message.value = undefined;
+    sendToServer();
+  }
+
+  function SendTopic(topic) {
+    message.command = 'TOPIC';
+    message.value = topic;
+    sendToServer();
+  }
+
+function SendKeepAlive()
+{
+  message.command = "PING";
+  message.value = undefined;
+  sendToServer();
+}
+
+  //////////////////////////////////////  SERVER MESSAGE EXCHANGE
 
   function sendToServer() {
-    session.clientId = clientId;
-    session.teamName = document.getElementById('xxx').value;
-    ws.send(JSON.stringify(session));
-  }
-  function updateStats(memuse) {
-    document.getElementById('cookieId').value = memuse.teamName;
-    //document.getElementById('heapTotal').innerHTML = memuse.heapTotal;
-    //document.getElementById('heapUsed').innerHTML = memuse.heapUsed;
+    message.clientId = clientId;
+    message.sessionId = sessionId;
+    message.timestamp = Date.now();
+    ws.send(JSON.stringify(message));
   }
 
-  var host = window.document.location.host.replace(/:.*/, '');
-  var ws = new WebSocket('ws://' + host + ':8080');
-  ws.onmessage = function (event) {
-    updateStats(JSON.parse(event.data));
+
+  function processServerMessage(message) {
+console.log(message);
+  }
+  //////////////////////////////////////  SOCKET SERVER CODE
+  ////////////////  Connect to socket
+var ws;
+  function SetupSockets() {
+    var host = window.document.location.host.replace(/:.*/, '');
+    ws = new WebSocket('ws://' + host + ':8001');
+
+    ws.onopen = () => {
+      document.getElementById('serverConnectionStatus').textContent = "Connected."
+     // Keep the TCP Socket connection alive
+      setInterval(SendKeepAlive, 1000);  
   };
 
+    ws.onmessage = function (event) {
+      processServerMessage(JSON.parse(event.data));
+    };
 
+    ws.onerror = (ev) => {
+      document.getElementById('serverConnectionStatus').textContent = "Error."
+    }
+
+    ws.onclose = function () {
+
+      tries = 0;
+      //try to reconnect in 5 seconds
+      while (tries < 10) {
+        document.getElementById('serverConnectionStatus').textContent = "Connection Error.  Retry: " + tries;
+        setTimeout(function () { start(websocketServerLocation) }, 5000);
+        tries++;
+      }
+      uiSetServerStatus("Connection Error.  Could not reconnect.  Try refreshing the page.");
+    };
+
+  }
+
+  //////////////////////////////////////  SESSION ID EXTRACT
   var sessionId = -1;
 
   function SetSessionId() {
-    var urlParts = parseURL(document.URL)
-    sessionId = urlParts.hash;
-    var cookie = document.cookie;
-
+  
+    sessionId = document.URL.slice(document.URL.lastIndexOf('/')+1);
   }
-function parseUri (str) {
-	var	o   = parseUri.options,
-		m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
-		uri = {},
-		i   = 14;
 
-	while (i--) uri[o.key[i]] = m[i] || "";
+  //////////////////////////////////////  UI UPDATE FUNCTIONS
 
-	uri[o.q.name] = {};
-	uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
-		if ($1) uri[o.q.name][$1] = $2;
-	});
+  function uiSetServerStatus(status) {
+    document.getElementById('serverConnectionStatus').textContent = status;
+  }
 
-	return uri;
-};
+  //////////////////////////////////////  PARSE URI UTILITY CODE
+  function parseUri(str) {
+    var o = parseUri.options,
+      m = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+      uri = {},
+      i = 14;
 
-parseUri.options = {
-	strictMode: false,
-	key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
-	q:   {
-		name:   "queryKey",
-		parser: /(?:^|&)([^&=]*)=?([^&]*)/g
-	},
-	parser: {
-		strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
-		loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
-	}
-};
+    while (i--) uri[o.key[i]] = m[i] || "";
+
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+      if ($1) uri[o.q.name][$1] = $2;
+    });
+
+    return uri;
+  };
+
+  parseUri.options = {
+    strictMode: false,
+    key: ["source", "protocol", "authority", "userInfo", "user", "password", "host", "port", "relative", "path", "directory", "file", "query", "anchor"],
+    q: {
+      name: "queryKey",
+      parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+      strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+      loose: /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+  };
 </script>
 </head>
 
+<!--/////////////////////////////////////////////////////////////////// PAGE HTML -->
+
 <body onload="InitDocument();">
-<strong>*VOTR*</strong><br> RSS:
+<strong>*VOTR*</strong><br><br> RSS:
 <div id='sessionid'>New Session</div>
 <p>
-  <div id='voteTopic'>Session Notes<input id="txtSessionName"></div>
+  <div id='voteTopic'>Session Notes <input id="txtSessionName"></div>
   <p>
     <div> <input id="txtVoteTopic"></div>
     <p>
       <div id='cookieId'>coooookie</div>
-
-      <button onclick="VoteButtonClick();" value="1">1</button>
+    </p>
+    <div>Server Connection Status: </div>
+    <div id='serverConnectionStatus'>Not Connected</div>
+    <p>
+      <button onclick="SendVote(this.value);" value="1">1</button>
+<button onclick="SendVote(this.value);" value="3">3</button>
+<button onclick="SendVote(this.value);" value="5">5</button>
+<button onclick="SendVote(this.value);" value="8">8</button>
+<button onclick="SendVote(this.value);" value="13">13</button>
+<button onclick="SendVote(this.value);" value="21">21</button>
+<button onclick="SendVote(this.value);" value="34">34</button>
+<button onclick="SendVote(this.value);" value="55">55</button>
+<button onclick="SendVote(this.value);" value="89">89</button>
 <p>
 
   </body>

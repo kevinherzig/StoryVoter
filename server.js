@@ -29,38 +29,58 @@ app.listen(8000, function () {
 //////////////////////////////////////  Process Routes
 
 app.get('', (req, res) => {
- res.sendFile('index.html', {root:'.'});
+  res.sendFile('index.html', { root: '.' });
 })
+
+// Client connected to a session, set a cooookie
+app.get("/session/:id", (req, res) => {
+  res.sendFile('client.html', { root: '.' });
+});
+
+app.get('/session', (req, res) => {
+  res.redirect('/session/' + nextSessionId++);
+});
+
+app.get('/:file', (req, res) => {
+  res.sendFile(req.params.file, { root: '.' });
+});
 
 // Client request for a new session id
 app.get("/session/new", (req, res) => {
   res.write(JSON.stringify(nextSessionId++));
 });
 
-// Client connected to a session, set a cooookie
-app.get("/session/:id", (req, res) => {
-   res.sendFile('client.html', {root: '.'});
-});
+
 
 
 
 // Client connected to /session manually, redirct them to a new session id
 app.get("/session", (req, res) => {
-const newSession = nextSessionId++;
-res.redirect('/session/' + newSession);
+  const newSession = nextSessionId++;
+  res.redirect('/session/' + newSession);
 });
 
 
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const wss = new ws.Server({perMessageDeflate: false, port: 8001} , () => {console.log('Sockets server listening on port 8001');});
+const wss = new ws.Server({ perMessageDeflate: false, port: 8001 }, () => {
+  console.log('Sockets server listening on port 8001');
 
-   function attach_votr_cookie(req, res, next) {
-    if(req.cookies.votr_user == undefined)
-      res.cookie("votr_user", uuidV4());
-    next();
-  }
+ wss.on('connection', function connection(ws) {
+  ws.on('message', function incoming(data) {
+    // Broadcast to everyone else.
+    ProcessClientMessage(data);
+    });
+  });
+});
+//////////////////////////////////////  HANDLE AN INCOMING MESSAGE
+
+function attach_votr_cookie(req, res, next) {
+  if (req.cookies.votr_user == undefined)
+    res.cookie("votr_user", uuidV4());
+  next();
+}
 
 //////////////////////////////////////  GET OR CREATE A SESSION
 function GetSession(sessionId) {
@@ -88,23 +108,11 @@ function BroadcastMessage(m) {
 //////////////////////////////////////  PROCESS A CLIENT MESSAGE
 
 function ProcessClientMessage(m) {
-  // What kind of message do we have?
 
-
-
-  if (m.sessionId == undefined)
-    return;
-
-  var session = GetSession(m.sessionId);
-
+  console.log(m);
 
 }
 
 
-//////////////////////////////////////  HANDLE AN INCOMING MESSAGE
-wss.on('connection', function connection(ws) {
-  wss.on('message', ProcessClientMessage(data));
-
-});
 
 
