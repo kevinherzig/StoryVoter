@@ -67,10 +67,10 @@ app.get("/session", (req, res) => {
 const wss = new ws.Server({ perMessageDeflate: false, port: 8001 }, () => {
   console.log('Sockets server listening on port 8001');
 
- wss.on('connection', function connection(ws) {
-  ws.on('message', function incoming(data) {
-    // Broadcast to everyone else.
-    ProcessClientMessage(data);
+  wss.on('connection', function connection(ws) {
+    ws.on('message', function incoming(data) {
+      // Broadcast to everyone else.
+      ProcessClientMessage(data);
     });
   });
 });
@@ -107,12 +107,63 @@ function BroadcastMessage(m) {
 }
 //////////////////////////////////////  PROCESS A CLIENT MESSAGE
 
-function ProcessClientMessage(m) {
+// Retrieve
+var MongoClient = require('mongodb').MongoClient;
 
-  console.log(m);
+var sessionCollection;
+var transactionCollection;
 
-}
+// Connect to the db
+MongoClient.connect("mongodb://192.168.1.214:27017/votr", function (err, db) {
+  if (err) { return console.dir(err); }
+
+   sessionCollection = db.collection('sessions');
+   transactionCollection = db.collection('transactions');
+
+
+});
+
+  function ProcessClientMessage(m) {
+
+var o = JSON.parse(m);
+
+    transactionCollection.insert(o);
+    
+    var clientId = o.clientId;
+    var sessionId = o.sessionId;
 
 
 
+    console.log(m);
+
+    //////////////////////////////////////  PAGE MESSAGE GENERATORS
+
+    //  Client message processor
+
+    // Extract the client and session id's
+
+    switch (o.command) {
+      case "VOTE":
+        break;
+
+      case "HIDEALL":
+        break;
+
+      case "CLEARALL":
+        break;
+
+      case "SHOWALL":
+        break;
+
+      case "TOPIC":
+        break;
+
+      case "PING":
+        break;
+
+
+
+    }
+
+  }
 
