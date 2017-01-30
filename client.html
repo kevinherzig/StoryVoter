@@ -97,7 +97,7 @@ var ws;
     ws.onopen = () => {
       document.getElementById('serverConnectionStatus').textContent = "Connected."
      // Keep the TCP Socket connection alive
-      setInterval(SendKeepAlive, 1000);  
+      setInterval(SendKeepAlive, 1000 * 60);  
   };
 
     ws.onmessage = function (event) {

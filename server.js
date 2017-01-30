@@ -5,15 +5,15 @@ var path = require('path');
 var server = require('http').createServer();
 var ws = require("ws");
 
+const NodeCache = require( "node-cache" );
+const myCache = new NodeCache({ stdTTL: sessionExpire });
 
 var cookieParser = require('cookie-parser')
-//const NodeCache = require("node-cache");
-const uuidV4 = require('uuid');
+\const uuidV4 = require('uuid');
 
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
 var nextSessionId = 1;
-//const myCache = new NodeCache({ stdTTL: sessionExpire });
 //var model = require('model.js');
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
@@ -34,6 +34,8 @@ app.get('', (req, res) => {
 
 // Client connected to a session, set a cooookie
 app.get("/session/:id", (req, res) => {
+  // If session is not in cache or does not exist
+  // then fetch/create it before returning the page
   res.sendFile('client.html', { root: '.' });
 });
 
@@ -117,53 +119,67 @@ var transactionCollection;
 MongoClient.connect("mongodb://192.168.1.214:27017/votr", function (err, db) {
   if (err) { return console.dir(err); }
 
-   sessionCollection = db.collection('sessions');
-   transactionCollection = db.collection('transactions');
+  sessionCollection = db.collection('sessions');
+  transactionCollection = db.collection('transactions');
 
+  //// test
+
+
+  // Get the next session id
+  var x = sessionCollection.find().sort({ _id: -1 }).limit(1);
+  x.on("readable", (p) => {
+    var q = x.read();
+    if (q == null) {
+      sessionCollection.insert({ _id: 1 });
+    }
+  }
+
+  )
+  x.forEach((doc) => {
+    s = doc._id
+  })
 
 });
 
-  function ProcessClientMessage(m) {
+function ProcessClientMessage(m) {
 
-var o = JSON.parse(m);
+  var o = JSON.parse(m);
 
-    transactionCollection.insert(o);
-    
-    var clientId = o.clientId;
-    var sessionId = o.sessionId;
+  transactionCollection.insert(o);
 
+  var clientId = o.clientId;
+  var sessionId = o.sessionId;
 
+  console.log(m);
 
-    console.log(m);
+  //////////////////////////////////////  PAGE MESSAGE GENERATORS
 
-    //////////////////////////////////////  PAGE MESSAGE GENERATORS
+  //  Client message processor
 
-    //  Client message processor
+  // Extract the client and session id's
 
-    // Extract the client and session id's
+  switch (o.command) {
+    case "VOTE":
+      break;
 
-    switch (o.command) {
-      case "VOTE":
-        break;
+    case "HIDEALL":
+      break;
 
-      case "HIDEALL":
-        break;
+    case "CLEARALL":
+      break;
 
-      case "CLEARALL":
-        break;
+    case "SHOWALL":
+      break;
 
-      case "SHOWALL":
-        break;
+    case "TOPIC":
+      break;
 
-      case "TOPIC":
-        break;
-
-      case "PING":
-        break;
+    case "PING":
+      break;
 
 
-
-    }
 
   }
+
+}
 
