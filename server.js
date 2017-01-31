@@ -5,21 +5,25 @@ var path = require('path');
 var server = require('http').createServer();
 var ws = require("ws");
 
-const NodeCache = require( "node-cache" );
-const myCache = new NodeCache({ stdTTL: sessionExpire });
-
-var cookieParser = require('cookie-parser')
-\const uuidV4 = require('uuid');
+const NodeCache = require("node-cache");
 
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
+
+const sessionCache = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600});
+const socketCache  = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600});
+
+var cookieParser = require('cookie-parser');
+const uuidV4 = require('uuid');
+
+
 var nextSessionId = 1;
-//var model = require('model.js');
+
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
 
 var app = express();
-app.use(cookieParser())
+app.use(cookieParser());
 app.use(attach_votr_cookie);
 
 app.listen(8000, function () {
@@ -30,13 +34,52 @@ app.listen(8000, function () {
 
 app.get('', (req, res) => {
   res.sendFile('index.html', { root: '.' });
-})
+});
 
 // Client connected to a session, set a cooookie
 app.get("/session/:id", (req, res) => {
+
   // If session is not in cache or does not exist
   // then fetch/create it before returning the page
-  res.sendFile('client.html', { root: '.' });
+
+  var passedId = req.params.id;
+
+  var session = sessionCache.get(passedId);
+
+// if we don't have a session in cache
+  if(session == undefined) {
+// try go get it from Mongo
+  var query = sessionCollection.find({ _id: passedId })
+  
+  query.toArray((err, docs) => {
+    if (docs.length == 1) {
+
+      // Mongo had it, so load it into cache
+      sessionCache.set(passedId, docs[0]);
+      session = docs[0];
+    }
+    else
+    // Mongo didn't have it so it's a brand new session
+    // create the new session and load it to Mongo and Cache
+    {
+      var newSession = new Object();
+      session = newSession;
+      newSession.sessionId = passedId;
+      sessionCache.set(passedId, newSession);
+      sessionCollection.insert({"_id":passedId, "Session:" : newSession});
+    }
+    
+    // We were mucking around with Mongo and now we have a session
+    // so send the response to the patiently waiting client
+    res.sendFile('client.html', { root: '.' });
+  });
+  }
+
+  // If we had to fetch the session info from Mongo then
+  // don't return anything to the client.  The callback
+  // from Mongo will send this page.
+  if(session != undefined)
+    res.sendFile('client.html', { root: '.' });
 });
 
 app.get('/session', (req, res) => {
@@ -84,21 +127,6 @@ function attach_votr_cookie(req, res, next) {
   next();
 }
 
-//////////////////////////////////////  GET OR CREATE A SESSION
-function GetSession(sessionId) {
-  if (sessionId = -1)
-    sessionId = nextSessionId++;
-
-  var session = myCache.get(sessionId)
-
-  if (session == undefined) {
-    session = model.GetNewSession();
-    session.sessionId = sessionId;
-    myCache.set(sessionid, session);
-  }
-  return session;
-}
-
 //////////////////////////////////////  BROADCAST CLIENT MESSAGE
 
 function BroadcastMessage(m) {
@@ -107,7 +135,7 @@ function BroadcastMessage(m) {
       client.send(data);
   });
 }
-//////////////////////////////////////  PROCESS A CLIENT MESSAGE
+//////////////////////////////////////  CONNEC TO MONGO DB
 
 // Retrieve
 var MongoClient = require('mongodb').MongoClient;
@@ -123,21 +151,6 @@ MongoClient.connect("mongodb://192.168.1.214:27017/votr", function (err, db) {
   transactionCollection = db.collection('transactions');
 
   //// test
-
-
-  // Get the next session id
-  var x = sessionCollection.find().sort({ _id: -1 }).limit(1);
-  x.on("readable", (p) => {
-    var q = x.read();
-    if (q == null) {
-      sessionCollection.insert({ _id: 1 });
-    }
-  }
-
-  )
-  x.forEach((doc) => {
-    s = doc._id
-  })
 
 });
 
