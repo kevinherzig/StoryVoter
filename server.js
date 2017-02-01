@@ -10,8 +10,8 @@ const NodeCache = require("node-cache");
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
 
-const sessionCache = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600});
-const socketCache  = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600});
+const sessionCache = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600 });
+const clientCache = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600 });
 
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
@@ -46,39 +46,39 @@ app.get("/session/:id", (req, res) => {
 
   var session = sessionCache.get(passedId);
 
-// if we don't have a session in cache
-  if(session == undefined) {
-// try go get it from Mongo
-  var query = sessionCollection.find({ _id: passedId })
-  
-  query.toArray((err, docs) => {
-    if (docs.length == 1) {
+  // if we don't have a session in cache
+  if (session == undefined) {
+    // try go get it from Mongo
+    var query = sessionCollection.find({ _id: passedId })
 
-      // Mongo had it, so load it into cache
-      sessionCache.set(passedId, docs[0]);
-      session = docs[0];
-    }
-    else
-    // Mongo didn't have it so it's a brand new session
-    // create the new session and load it to Mongo and Cache
-    {
-      var newSession = new Object();
-      session = newSession;
-      newSession.sessionId = passedId;
-      sessionCache.set(passedId, newSession);
-      sessionCollection.insert({"_id":passedId, "Session:" : newSession});
-    }
-    
-    // We were mucking around with Mongo and now we have a session
-    // so send the response to the patiently waiting client
-    res.sendFile('client.html', { root: '.' });
-  });
+    query.toArray((err, docs) => {
+      if (docs.length == 1) {
+
+        // Mongo had it, so load it into cache
+        sessionCache.set(passedId, docs[0]);
+        session = docs[0];
+      }
+      else
+      // Mongo didn't have it so it's a brand new session
+      // create the new session and load it to Mongo and Cache
+      {
+        var newSession = new Object();
+        session = newSession;
+        newSession.sessionId = passedId;
+        sessionCache.set(passedId, newSession);
+        sessionCollection.insert({ "_id": passedId, "Session:": newSession });
+      }
+
+      // We were mucking around with Mongo and now we have a session
+      // so send the response to the patiently waiting client
+      res.sendFile('client.html', { root: '.' });
+    });
   }
 
   // If we had to fetch the session info from Mongo then
   // don't return anything to the client.  The callback
   // from Mongo will send this page.
-  if(session != undefined)
+  if (session != undefined)
     res.sendFile('client.html', { root: '.' });
 });
 
@@ -154,6 +154,25 @@ MongoClient.connect("mongodb://192.168.1.214:27017/votr", function (err, db) {
 
 });
 
+
+function GetSessionObject(SessionId) {
+  var s = sessionCache.get(SessionId);
+ 
+  if (s == undefined) {
+    s = new Object();
+  }
+
+  if(s.clientSockets == undefined)
+    s.clientSocketArray = new Object();
+
+    if(s.state == undefined)
+    s.clientStateArray = new Object();
+  
+  return s;
+}
+
+
+
 function ProcessClientMessage(m) {
 
   var o = JSON.parse(m);
@@ -163,22 +182,34 @@ function ProcessClientMessage(m) {
   var clientId = o.clientId;
   var sessionId = o.sessionId;
 
+  var thisSessionObject = GetSessionObject(sessionId);
+  var thisClientsState = thisSessionObject.clientStateArray[clientId];
+  if (thisClientsState == undefined) {
+    thisClientsState = new Object();
+    thisSessionObject.clientStateArray[clientId] = thisClientsState;
+  }
+
+
   console.log(m);
 
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
-
   //  Client message processor
-
   // Extract the client and session id's
 
   switch (o.command) {
+    case "MYNAME":
+      thisClientsState.clientName = o.value;
+      break;
+
     case "VOTE":
+      thisClientsState.vote = o.value;
       break;
 
     case "HIDEALL":
+
       break;
 
-    case "CLEARALL":
+    case "NEWVOTE":
       break;
 
     case "SHOWALL":

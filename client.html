@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <style>
       body {
@@ -23,7 +22,7 @@
   }
   //////////////////////////////////////  PAGE INIT HANDLER
 
-var clientId = "0";
+  var clientId = "0";
   function InitDocument() {
 
     // Extract the client id assigned by the server
@@ -32,10 +31,15 @@ var clientId = "0";
     document.getElementById('cookieId').textContent = "Client Id: " + clientId;
     SetupSockets();
 
- 
+
   }
 
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
+
+function SendName(myName) {
+  message.command = "NAME";
+  message.value = myName;
+}
 
   function SendVote(voteValue) {
     message.command = "VOTE";
@@ -67,12 +71,11 @@ var clientId = "0";
     sendToServer();
   }
 
-function SendKeepAlive()
-{
-  message.command = "PING";
-  message.value = undefined;
-  sendToServer();
-}
+  function SendKeepAlive() {
+    message.command = "PING";
+    message.value = undefined;
+    sendToServer();
+  }
 
   //////////////////////////////////////  SERVER MESSAGE EXCHANGE
 
@@ -85,20 +88,20 @@ function SendKeepAlive()
 
 
   function processServerMessage(message) {
-console.log(message);
+    console.log(message);
   }
   //////////////////////////////////////  SOCKET SERVER CODE
   ////////////////  Connect to socket
-var ws;
+  var ws;
   function SetupSockets() {
     var host = window.document.location.host.replace(/:.*/, '');
     ws = new WebSocket('ws://' + host + ':8001');
 
     ws.onopen = () => {
       document.getElementById('serverConnectionStatus').textContent = "Connected."
-     // Keep the TCP Socket connection alive
-      setInterval(SendKeepAlive, 1000 * 60);  
-  };
+      // Keep the TCP Socket connection alive
+      setInterval(SendKeepAlive, 1000 * 60);
+    };
 
     ws.onmessage = function (event) {
       processServerMessage(JSON.parse(event.data));
@@ -126,8 +129,8 @@ var ws;
   var sessionId = -1;
 
   function SetSessionId() {
-  
-    sessionId = document.URL.slice(document.URL.lastIndexOf('/')+1);
+
+    sessionId = document.URL.slice(document.URL.lastIndexOf('/') + 1);
   }
 
   //////////////////////////////////////  UI UPDATE FUNCTIONS
@@ -174,8 +177,8 @@ var ws;
 <strong>*VOTR*</strong><br><br> RSS:
 <div id='sessionid'>New Session</div>
 <p>
-  <div id='voteTopic'>Session Notes <input id="txtSessionName"></div>
-  <p>
+  
+  <div id='voteTopic'>Session Notes <input id="txtSessionName"> <button>New Vote</button>  <p>
     <div> <input id="txtVoteTopic"></div>
     <p>
       <div id='cookieId'>coooookie</div>
@@ -183,7 +186,7 @@ var ws;
     <div>Server Connection Status: </div>
     <div id='serverConnectionStatus'>Not Connected</div>
     <p>
-      <button onclick="SendVote(this.value);" value="1">1</button>
+<button onclick="SendVote(this.value);" value="1">1</button>
 <button onclick="SendVote(this.value);" value="3">3</button>
 <button onclick="SendVote(this.value);" value="5">5</button>
 <button onclick="SendVote(this.value);" value="8">8</button>
