@@ -46,18 +46,6 @@ app.get('/session', (req, res) => {
   res.redirect('/session/' + nextSessionId++);
 });
 
-app.get('/:file', (req, res) => {
-  res.sendFile(req.params.file, { root: '.' });
-});
-
-// Client request for a new session id
-app.get("/session/new", (req, res) => {
-  res.write(JSON.stringify(nextSessionId++));
-});
-
-
-
-
 
 // Client connected to /session manually, redirct them to a new session id
 app.get("/session", (req, res) => {
@@ -65,7 +53,7 @@ app.get("/session", (req, res) => {
   res.redirect('/session/' + newSession);
 });
 
-
+app.use(express.static('html'))
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
@@ -138,8 +126,6 @@ function GetSessionObject(SessionId) {
 
   return s;
 }
-
-
 
 function ProcessClientMessage(m, socket) {
 
