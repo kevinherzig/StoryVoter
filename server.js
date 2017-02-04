@@ -1,8 +1,6 @@
-var staticserver = require('serve-static').Server;
+
 var express = require('express');
 var path = require('path');
-
-var server = require('http').createServer();
 var ws = require("ws");
 
 const NodeCache = require("node-cache");
@@ -10,8 +8,7 @@ const NodeCache = require("node-cache");
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
 
-const sessionCache = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600 });
-const clientCache = new NodeCache({ stdTTL: sessionExpire, checkperiod: 600 });
+const sessionCache = new NodeCache({useClones: false, stdTTL: 100, checkperiod: 120});
 
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
@@ -39,49 +36,12 @@ app.get('', (req, res) => {
 // Client connected to a session, set a cooookie
 app.get("/session/:id", (req, res) => {
 
-  // If session is not in cache or does not exist
-  // then fetch/create it before returning the page
-
-  var passedId = req.params.id;
-
-  var session = sessionCache.get(passedId);
-
-  // if we don't have a session in cache
-  if (session == undefined) {
-    // try go get it from Mongo
-    var query = sessionCollection.find({ _id: passedId })
-
-    query.toArray((err, docs) => {
-      if (docs.length == 1) {
-
-        // Mongo had it, so load it into cache
-        sessionCache.set(passedId, docs[0]);
-        session = docs[0];
-      }
-      else
-      // Mongo didn't have it so it's a brand new session
-      // create the new session and load it to Mongo and Cache
-      {
-        var newSession = new Object();
-        session = newSession;
-        newSession.sessionId = passedId;
-        sessionCache.set(passedId, newSession);
-        sessionCollection.insert({ "_id": passedId, "Session:": newSession });
-      }
-
       // We were mucking around with Mongo and now we have a session
       // so send the response to the patiently waiting client
       res.sendFile('client.html', { root: '.' });
-    });
-  }
 
-  // If we had to fetch the session info from Mongo then
-  // don't return anything to the client.  The callback
-  // from Mongo will send this page.
-  if (session != undefined)
-    res.sendFile('client.html', { root: '.' });
 });
-
+  
 app.get('/session', (req, res) => {
   res.redirect('/session/' + nextSessionId++);
 });
@@ -113,9 +73,11 @@ const wss = new ws.Server({ perMessageDeflate: false, port: 8001 }, () => {
   console.log('Sockets server listening on port 8001');
 
   wss.on('connection', function connection(ws) {
+    // store the connection
+
     ws.on('message', function incoming(data) {
       // Broadcast to everyone else.
-      ProcessClientMessage(data);
+      ProcessClientMessage(data, this);
     });
   });
 });
@@ -157,23 +119,29 @@ MongoClient.connect("mongodb://192.168.1.214:27017/votr", function (err, db) {
 
 function GetSessionObject(SessionId) {
   var s = sessionCache.get(SessionId);
- 
+
   if (s == undefined) {
     s = new Object();
   }
 
-  if(s.clientSockets == undefined)
+  if (s.clientSocketArray == undefined)
     s.clientSocketArray = new Object();
 
-    if(s.state == undefined)
-    s.clientStateArray = new Object();
-  
+  if (s.gameState == undefined)
+  {
+    s.gameState = new Object();
+    s.topic = "";
+    s.notes = "";
+    s.gameState.clientStateArray = new Object();
+  }
+  sessionCache.set(SessionId, s)
+
   return s;
 }
 
 
 
-function ProcessClientMessage(m) {
+function ProcessClientMessage(m, socket) {
 
   var o = JSON.parse(m);
 
@@ -183,10 +151,14 @@ function ProcessClientMessage(m) {
   var sessionId = o.sessionId;
 
   var thisSessionObject = GetSessionObject(sessionId);
-  var thisClientsState = thisSessionObject.clientStateArray[clientId];
+
+
+  var thisClientsState = thisSessionObject.gameState.clientStateArray[clientId];
   if (thisClientsState == undefined) {
     thisClientsState = new Object();
-    thisSessionObject.clientStateArray[clientId] = thisClientsState;
+
+    thisSessionObject.gameState.clientStateArray[clientId] = thisClientsState;
+    thisSessionObject.clientSocketArray[clientId] = socket;
   }
 
 
@@ -206,24 +178,33 @@ function ProcessClientMessage(m) {
       break;
 
     case "HIDEALL":
-
+      thisSessionObject.gameState.clientStateArray.forEach((clientState) => { clientState.visible = false; });
       break;
 
     case "NEWVOTE":
+      thisSessionObject.gameState.clientStates.forEach((clientState) => {
+        clientState.visible = false;
+        clientState.vote = undefined;
+      });
       break;
 
     case "SHOWALL":
       break;
 
     case "TOPIC":
+    thisSessionObject.gameState.Topic = o.value;
       break;
 
     case "PING":
       break;
-
-
-
   }
 
+  sessionCache.set(sessionId, thisSessionObject);
+
+  for (var aSocket in thisSessionObject.clientSocketArray) 
+  {
+    if (thisSessionObject.clientSocketArray[aSocket].readyState == 1)
+      thisSessionObject.clientSocketArray[aSocket].send(JSON.stringify(thisSessionObject.gameState));
+  }
 }
 
