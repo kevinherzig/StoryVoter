@@ -35,20 +35,12 @@ app.get('', (req, res) => {
 
 // Client connected to a session, set a cooookie
 app.get("/session/:id", (req, res) => {
-
-      // We were mucking around with Mongo and now we have a session
-      // so send the response to the patiently waiting client
       res.sendFile('client.html', { root: '.' });
-
 });
   
 app.get('/session', (req, res) => {
   res.redirect('/session/' + nextSessionId++);
 });
-
-
-
-
 
 // Client connected to /session manually, redirct them to a new session id
 app.get("/session", (req, res) => {
@@ -97,7 +89,7 @@ var sessionCollection;
 var transactionCollection;
 
 // Connect to the db
-MongoClient.connect("mongodb://192.168.1.214:27017/votr", function (err, db) {
+MongoClient.connect("mongodb://votr:IVoteAllDay@palace.herzig.net:27017/votr", function (err, db) {
   if (err) { return console.dir(err); }
 
   sessionCollection = db.collection('sessions');
@@ -199,4 +191,5 @@ thisSessionObject.clientSocketArray[clientId] = socket;
       thisSessionObject.clientSocketArray[aSocket].send(JSON.stringify(thisSessionObject.gameState));
   }
 }
+
 
