@@ -47,6 +47,9 @@ app.get('/session', (req, res) => {
 });
 
 
+
+
+
 // Client connected to /session manually, redirct them to a new session id
 app.get("/session", (req, res) => {
   const newSession = nextSessionId++;
@@ -127,6 +130,8 @@ function GetSessionObject(SessionId) {
   return s;
 }
 
+
+
 function ProcessClientMessage(m, socket) {
 
   var o = JSON.parse(m);
@@ -144,9 +149,10 @@ function ProcessClientMessage(m, socket) {
     thisClientsState = new Object();
 
     thisSessionObject.gameState.clientStateArray[clientId] = thisClientsState;
-    thisSessionObject.clientSocketArray[clientId] = socket;
+
   }
 
+thisSessionObject.clientSocketArray[clientId] = socket;
 
   console.log(m);
 
@@ -155,8 +161,8 @@ function ProcessClientMessage(m, socket) {
   // Extract the client and session id's
 
   switch (o.command) {
-    case "MYNAME":
-      thisClientsState.clientName = o.value;
+    case "NAME":
+      thisClientsState.name = o.value;
       break;
 
     case "VOTE":
