@@ -8,7 +8,7 @@ const NodeCache = require("node-cache");
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
 
-const sessionCache = new NodeCache({useClones: false, stdTTL: 100, checkperiod: 120});
+const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
 
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
@@ -35,9 +35,9 @@ app.get('', (req, res) => {
 
 // Client connected to a session, set a cooookie
 app.get("/session/:id", (req, res) => {
-      res.sendFile('client.html', { root: '.' });
+  res.sendFile('client.html', { root: '.' });
 });
-  
+
 app.get('/session', (req, res) => {
   res.redirect('/session/' + nextSessionId++);
 });
@@ -110,8 +110,7 @@ function GetSessionObject(SessionId) {
   if (s.clientSocketArray == undefined)
     s.clientSocketArray = new Object();
 
-  if (s.gameState == undefined)
-  {
+  if (s.gameState == undefined) {
     s.gameState = new Object();
     s.topic = "";
     s.notes = "";
@@ -144,7 +143,7 @@ function ProcessClientMessage(m, socket) {
 
   }
 
-thisSessionObject.clientSocketArray[clientId] = socket;
+  thisSessionObject.clientSocketArray[clientId] = socket;
 
   console.log(m);
 
@@ -176,20 +175,19 @@ thisSessionObject.clientSocketArray[clientId] = socket;
       break;
 
     case "TOPIC":
-    thisSessionObject.gameState.Topic = o.value;
+      thisSessionObject.gameState.topic = o.value;
       break;
 
     case "PING":
       break;
   }
+  thisSessionObject.gameState.lastClientUpdate = clientId;
 
   sessionCache.set(sessionId, thisSessionObject);
 
-  for (var aSocket in thisSessionObject.clientSocketArray) 
-  {
+  for (var aSocket in thisSessionObject.clientSocketArray) {
     if (thisSessionObject.clientSocketArray[aSocket].readyState == 1)
       thisSessionObject.clientSocketArray[aSocket].send(JSON.stringify(thisSessionObject.gameState));
   }
 }
-
 

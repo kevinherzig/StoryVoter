@@ -120,24 +120,42 @@ function processServerMessage(message) {
 }
 
 function UpdateGame(gameState) {
+var topic = gameState.topic;
 
-var grid = $('#grid');
+if(topic == undefined)
+{
+    $('#txtTopic').text = '';
+    $('#topic').innerText = "No Topic"
+}
+else
+    {
+        // avoid echo updates to the topic if we're typing
+    if(gameState.lastClientUpdate != clientId)
+        $('#txtTopic').val(topic);
+
+    $('#topic').text(topic);
+    }
+var grid = $('#tableBody');
 
 grid.empty()
     for (var client in gameState.clientStateArray) {
         state = gameState.clientStateArray[client];
-        var client = '<div class="row" id="row-header"><div class="col-md-8">'
-        if (state.name == undefined)
-            client = client = "Anonymous"
+        var client = '<tr><td>';
+
+        if (state.name == undefined || state.name == "")
+            client = client + "Anonymous"
         else
             client = client + state.name;
-        client = client + '</div><div class="col-md-4">';
+
+        client = client + '</td><td>';
+
         if (state.vote == undefined)
             client = client + "None";
         else
             client = client + state.vote;
-        client = client + '</div></div>';
-        $('#grid').append(client);
+
+        client = client + '</td></tr>';
+        grid.append(client);
     }
 
 }

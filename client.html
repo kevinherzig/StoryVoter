@@ -7,49 +7,52 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="/css/bootstrap.min.css" rel="stylesheet">
 </head>
+
 <body onload="InitDocument();">
   <div class="container">
     <div class="page-header">
-      <img src="/votr.png">
-      <p class="lead">VOTR - Agile Team Voting System by Kevin Herzig
-    </div>
-    <br>
-    <div id='voteTopic'>Current Vote Topic: <input id="txtSessionName" onkeyup="SendTopic(this.value)"> <button>New Vote</button> <br>
-    <div id='name'>My Name: <input id="txtMyName" onkeyup="SendName(this.value)"> 
-    <div><button>New Vote</button> <br></div>
-  
-      </p>
-      <div>Server Connection Status: </div>
-      <div id='serverConnectionStatus'>Not Connected</div>
+      <img src="/votr.png" class = "img-responsive">
+      <br><br>
+      <div id="sessionId">Session</div>
       <br>
-      <button onclick="SendVote(this.value);" value="1">1</button>
-      <button onclick="SendVote(this.value);" value="3">3</button>
-      <button onclick="SendVote(this.value);" value="5">5</button>
-      <button onclick="SendVote(this.value);" value="8">8</button>
-      <button onclick="SendVote(this.value);" value="13">13</button>
-      <button onclick="SendVote(this.value);" value="21">21</button>
-      <button onclick="SendVote(this.value);" value="34">34</button>
-      <button onclick="SendVote(this.value);" value="55">55</button>
-      <button onclick="SendVote(this.value);" value="89">89</button>
-
-      <!----------------------------------------------------- GRID STUFF -->
-      <h3>Current Votes</h3>
-      <div class='container' id="grid">
-        <div class="row" id="row-header">
-          <div class="col-md-8">Player</div>
-          <div class="col-md-4">Vote</div>
-        </div>
-        <div class="row" id="row-header">
-          <div class="col-md-8">Player</div>
-          <div class="col-md-4">Vote</div>
-        </div>
-      </div>
-
-      <script src="/js/jquery-3.1.1.min.js"></script>
-      <script src="/js/bootstrap.js"></script>
-      <script src="/js/js.cookie.js"></script>
-      <script src="/js/client.js"></script>
     </div>
+    <br> Current Vote Topic: <input id="txtTopic" onkeyup="SendTopic(this.value)"> <button>New Vote</button> <br> My Name:
+    <input id="txtMyName" onkeyup="SendName(this.value)">
+    <button>New Vote</button> <br></div>
+
+  </p>
+  <div>Server Connection Status: </div>
+  <div id='serverConnectionStatus'>Not Connected</div>
+  <br>
+  <button onclick="SendVote(this.value);" value="1">1</button>
+  <button onclick="SendVote(this.value);" value="3">3</button>
+  <button onclick="SendVote(this.value);" value="5">5</button>
+  <button onclick="SendVote(this.value);" value="8">8</button>
+  <button onclick="SendVote(this.value);" value="13">13</button>
+  <button onclick="SendVote(this.value);" value="21">21</button>
+  <button onclick="SendVote(this.value);" value="34">34</button>
+  <button onclick="SendVote(this.value);" value="55">55</button>
+  <button onclick="SendVote(this.value);" value="89">89</button>
+<br><br>
+  <div id='topic' class=".p1">No Topic</div><br>
+  <table class="table">
+    <caption>Votes</caption>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Vote</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+    </tbody>
+
+  </table>
+
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+  <script src="/js/js.cookie.js"></script>
+  <script src="/js/client.js"></script>
+  </div>
 
 </body>
 
