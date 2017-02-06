@@ -80,7 +80,7 @@ function SetupSockets() {
     var host = window.document.location.host.replace(/:.*/, '');
     ws = new WebSocket('ws://' + host + ':8001');
 
-    ws.onopen = () => {
+    ws.onopen = function()  {
         uiSetServerStatus('Connected.')
         // Keep the TCP Socket connection alive
         setInterval(SendKeepAlive, 1000 * 60);
@@ -93,7 +93,7 @@ function SetupSockets() {
         processServerMessage(JSON.parse(event.data));
     };
 
-    ws.onerror = (ev) => {
+    ws.onerror = function(ev) {
         uiSetServerStatus('An error occurred.  Please refresh the page.')
     }
 
