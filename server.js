@@ -2,6 +2,7 @@
 var express = require('express');
 var path = require('path');
 var ws = require("ws");
+var jsonfile = require('jsonfile');
 
 const NodeCache = require("node-cache");
 
@@ -14,7 +15,14 @@ var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
 
 
-var nextSessionId = 1;
+var nextSessionId = 100;
+var sessionFile = './sessionId.json';
+try {
+  var x = jsonfile.readFileSync(sessionFile);
+}
+catch (err) {
+  console.log('Could not read session file, defaulting')
+}
 
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
@@ -23,7 +31,14 @@ var app = express();
 app.use(cookieParser());
 app.use(attach_votr_cookie);
 
-app.listen(8000, function () {
+var port = process.argv[2];
+if (port == undefined)
+  port = 8000;
+
+if (isNaN(port))
+  port = 8000;
+
+app.listen(port, function () {
   console.log('Express listening on http://localhost:8000');
 });
 
@@ -190,4 +205,25 @@ function ProcessClientMessage(m, socket) {
       thisSessionObject.clientSocketArray[aSocket].send(JSON.stringify(thisSessionObject.gameState));
   }
 }
+
+
+// this function is called when you want the server to die gracefully
+// i.e. wait for existing connections
+function gracefulShutdown() {
+  console.log("Received kill signal, shutting down gracefully.");
+  try {
+    jsonfile.writeFileSync(sessionFile, nextSessionId);
+  }
+  catch (err) {
+    console.log('Could not write session file' + err);
+  }
+  process.exit()
+
+}
+
+// listen for TERM signal .e.g. kill 
+process.on('SIGTERM', gracefulShutdown);
+
+// listen for INT signal e.g. Ctrl-C
+process.on('SIGINT', gracefulShutdown);
 

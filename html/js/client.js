@@ -84,6 +84,9 @@ function SetupSockets() {
         document.getElementById('serverConnectionStatus').textContent = "Connected."
         // Keep the TCP Socket connection alive
         setInterval(SendKeepAlive, 1000 * 60);
+
+        // init the packet
+        SendName('New Player');
     };
 
     ws.onmessage = function (event) {
