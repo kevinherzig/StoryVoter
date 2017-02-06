@@ -3,7 +3,6 @@ var express = require('express');
 var path = require('path');
 var ws = require("ws");
 var jsonfile = require('jsonfile');
-
 const NodeCache = require("node-cache");
 
 // 3 Hour expiration time
@@ -95,24 +94,6 @@ function BroadcastMessage(m) {
       client.send(data);
   });
 }
-//////////////////////////////////////  CONNEC TO MONGO DB
-
-// Retrieve
-var MongoClient = require('mongodb').MongoClient;
-
-var sessionCollection;
-var transactionCollection;
-
-// Connect to the db
-MongoClient.connect("mongodb://votr:IVoteAllDay@palace.herzig.net:27017/votr", function (err, db) {
-  if (err) { return console.dir(err); }
-
-  sessionCollection = db.collection('sessions');
-  transactionCollection = db.collection('transactions');
-
-  //// test
-
-});
 
 
 function GetSessionObject(SessionId) {
@@ -141,8 +122,6 @@ function GetSessionObject(SessionId) {
 function ProcessClientMessage(m, socket) {
 
   var o = JSON.parse(m);
-
-  transactionCollection.insert(o);
 
   var clientId = o.clientId;
   var sessionId = o.sessionId;
