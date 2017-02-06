@@ -2,64 +2,86 @@
 <html>
 
 <head>
+  <!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','GTM-KRXQ3QF');</script>
+<!-- End Google Tag Manager -->
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css?family=Fira+Sans+Condensed" rel="stylesheet" type="text/css">
+  <link href="/css/bootstrap.css" rel="stylesheet">
+  <link href="/css/docs.min.css" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Fira Sans Condensed', sans-serif;
+    }
+  </style>
 </head>
 
 <body onload="InitDocument();">
+  <!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-KRXQ3QF"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
   <div class="text-center">
-  <img src="/votr.png" class="img-responsive">
+    <img src="/votr.png" class="img-responsive">
   </div>
   <div class="container">
-    <div class="page-header">
-      
-      <br><br>
+    <div class="page-header">  
       <div id="sessionId">Session</div>
-      <br>
+        <div id='serverConnectionStatus'>Not Connected</div>
     </div>
+
+<div class="bd-example" data-example-id="">
+    <div class="form-group">
+      <label for="txtTopic">Vote Topic:</label>
+      <input type="text" class="form-control" id="txtTopic" onkeyup="SendTopic(this.value)">
+
+
+      <label for="txtMyName">My Name:</label>
+      <input type="text" class="form-control" id="txtMyName" onkeyup="SendName(this.value)">
+      <br>
+      <button onclick="SendClearAll();">Clear Votes</button><br>
+    
+      <div class="btn-toolbar" role="toolbar">
+        <div class="btn-group btn-group-sm" role="group">
+          <button onclick="SendVote(this.value);" value="1">1</button>
+          <button onclick="SendVote(this.value);" value="3">3</button>
+          <button onclick="SendVote(this.value);" value="5">5</button>
+          <button onclick="SendVote(this.value);" value="8">8</button>
+          <button onclick="SendVote(this.value);" value="13">13</button>
+          <button oncldick="SendVote(this.value);" value="21">21</button>
+          <button onclick="SendVote(this.value);" value="34">34</button>
+          <button onclick="SendVote(this.value);" value="55">55</button>
+          <button onclick="SendVote(this.value);" value="89">89</button>
+        </div>
+      </div>
+      <div id='topic' class=".p1">No Topic</div><br>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Vote</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+
+      </table>
+
+    </div>
+  </div>
+
   
-  <div class="form-group">
-    <label for="usr">Vote Topic:</label>
-    <input type="text" class="form-control" id="txtTopic" onkeyup="SendTopic(this.value)">
-  </div>
-  <div class="form-group">
-    <label for="pwd">My Name:</label>
-    <input type="password" class="form-control" id="txtMyName" onkeyup="SendName(this.value)">
-    <button onclick="SendClearAll();">Clear Votes</button>
-  </div>
-  
-  <div>Server Connection Status: </div>
-  <div id='serverConnectionStatus'>Not Connected</div>
-  <br>
-  <button onclick="SendVote(this.value);" value="1">1</button>
-  <button onclick="SendVote(this.value);" value="3">3</button>
-  <button onclick="SendVote(this.value);" value="5">5</button>
-  <button onclick="SendVote(this.value);" value="8">8</button>
-  <button onclick="SendVote(this.value);" value="13">13</button>
-  <button onclick="SendVote(this.value);" value="21">21</button>
-  <button onclick="SendVote(this.value);" value="34">34</button>
-  <button onclick="SendVote(this.value);" value="55">55</button>
-  <button onclick="SendVote(this.value);" value="89">89</button>
-  <br><br>
-  <div id='topic' class=".p1">No Topic</div><br>
-  <table class="table">
-    <caption>Votes</caption>
-    <thead>
-      <tr>
-        <th>Name</th>
-        <th>Vote</th>
-      </tr>
-    </thead>
-    <tbody id="tableBody">
-    </tbody>
-
-  </table>
-
-  </div>
-</div>
-
+  <footer class="footer">
+    <div class="text-center">
+      <span class="bg-inverse text-white border-2 font-italic">VOTR Agile Team Story Pointing System by Kevin Herzig</span>
+    </div>
+  </footer>
 
   <script src="/js/jquery-3.1.1.min.js"></script>
   <script src="/js/bootstrap.js"></script>

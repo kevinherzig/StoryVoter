@@ -81,7 +81,7 @@ function SetupSockets() {
     ws = new WebSocket('ws://' + host + ':8001');
 
     ws.onopen = () => {
-        document.getElementById('serverConnectionStatus').textContent = "Connected."
+        uiSetServerStatus('Connected.')
         // Keep the TCP Socket connection alive
         setInterval(SendKeepAlive, 1000 * 60);
 
@@ -94,11 +94,11 @@ function SetupSockets() {
     };
 
     ws.onerror = (ev) => {
-        document.getElementById('serverConnectionStatus').textContent = "Error."
+        uiSetServerStatus('An error occurred.  Please refresh the page.')
     }
 
     ws.onclose = function () {
-        uiSetServerStatus("Connection Error.  Could not reconnect.  Try refreshing the page.");
+        uiSetServerStatus("You were disconnected.  Refresh the page to reconnect.");
     };
 }
 
@@ -108,17 +108,17 @@ var sessionId = -1;
 function SetSessionId() {
 
     sessionId = document.URL.slice(document.URL.lastIndexOf('/') + 1);
+    $('#sessionId').text('Your current session ID is ' + sessionId)
 }
 
 //////////////////////////////////////  UI UPDATE FUNCTIONS
 
 function uiSetServerStatus(status) {
-    $('#serverConnectionStatus').text = status;
+    $('#serverConnectionStatus').text('Server connection status: ' + status);
 }
 
 
 function processServerMessage(message) {
-    $('#txtDebug').text = "Debug: " + JSON.stringify(message);
     UpdateGame(message);
 }
 
