@@ -77,8 +77,8 @@ function sendToServer() {
 ////////////////  Connect to socket
 var ws;
 function SetupSockets() {
-    var host = window.document.location.host.replace(/:.*/, '');
-    ws = new WebSocket('ws://' + host + ':8001');
+    var socketHost = "http://" + window.document.location.host + "/sockets"
+    ws = new SockJS(socketHost);
 
     ws.onopen = function()  {
         uiSetServerStatus('Connected.')

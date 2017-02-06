@@ -1,9 +1,10 @@
 
 var express = require('express');
 var path = require('path');
-var ws = require("ws");
+var ws = require("sockjs");
 var jsonfile = require('jsonfile');
 const NodeCache = require("node-cache");
+var http = require('http');
 
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
@@ -37,8 +38,10 @@ if (port == undefined)
 if (isNaN(port))
   port = 8000;
 
-app.listen(port, function () {
-  console.log('Express listening on http://localhost:8000');
+app.set('port', port);
+
+var server = http.createServer(app).listen(app.get('port'), function () {
+  console.log('Express server listening on port ' + app.get('port'));
 });
 
 //////////////////////////////////////  Process Routes
@@ -62,37 +65,31 @@ app.get("/session", (req, res) => {
   res.redirect('/session/' + newSession);
 });
 
-app.use(express.static('html'))
+
+
+app.use(express.static('html'));
+
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const wss = new ws.Server({ perMessageDeflate: false, port: 8001 }, () => {
+const wss = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
   console.log('Sockets server listening on port 8001');
-
-  wss.on('connection', function connection(ws) {
-    // store the connection
-
-    ws.on('message', function incoming(data) {
-      // Broadcast to everyone else.
-      ProcessClientMessage(data, this);
-    });
+});
+wss.on('connection', function connection(conn) {
+  console.log('connection' + ws);
+  conn.on('data', function incoming(data) {
+    // Broadcast to everyone else.
+    ProcessClientMessage(data, this);
   });
 });
+
+wss.installHandlers(server, { prefix: '/sockets' });
 //////////////////////////////////////  HANDLE AN INCOMING MESSAGE
 
 function attach_votr_cookie(req, res, next) {
   if (req.cookies.votr_user == undefined)
     res.cookie("votr_user", uuidV4());
   next();
-}
-
-//////////////////////////////////////  BROADCAST CLIENT MESSAGE
-
-function BroadcastMessage(m) {
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN)
-      client.send(data);
-  });
 }
 
 
@@ -160,7 +157,7 @@ function ProcessClientMessage(m, socket) {
 
     case "CLEARALL":
 
-    for(var clientId in thisSessionObject.gameState.clientStateArray) {
+      for (var clientId in thisSessionObject.gameState.clientStateArray) {
         thisSessionObject.gameState.clientStateArray[clientId].vote = undefined;
         thisSessionObject.gameState.topic = "";
       }
@@ -182,7 +179,7 @@ function ProcessClientMessage(m, socket) {
 
   for (var aSocket in thisSessionObject.clientSocketArray) {
     if (thisSessionObject.clientSocketArray[aSocket].readyState == 1)
-      thisSessionObject.clientSocketArray[aSocket].send(JSON.stringify(thisSessionObject.gameState));
+      thisSessionObject.clientSocketArray[aSocket].write(JSON.stringify(thisSessionObject.gameState));
   }
 }
 
