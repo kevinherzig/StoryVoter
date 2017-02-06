@@ -18,7 +18,7 @@ const uuidV4 = require('uuid');
 var nextSessionId = 100;
 var sessionFile = './sessionId.json';
 try {
-  var x = jsonfile.readFileSync(sessionFile);
+  var nextSessionId = jsonfile.readFileSync(sessionFile);
 }
 catch (err) {
   console.log('Could not read session file, defaulting')
@@ -179,11 +179,12 @@ function ProcessClientMessage(m, socket) {
       thisSessionObject.gameState.clientStateArray.forEach((clientState) => { clientState.visible = false; });
       break;
 
-    case "NEWVOTE":
-      thisSessionObject.gameState.clientStates.forEach((clientState) => {
-        clientState.visible = false;
-        clientState.vote = undefined;
-      });
+    case "CLEARALL":
+
+    for(var clientId in thisSessionObject.gameState.clientStateArray) {
+        thisSessionObject.gameState.clientStateArray[clientId].vote = undefined;
+        thisSessionObject.gameState.topic = "";
+      }
       break;
 
     case "SHOWALL":

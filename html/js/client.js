@@ -133,7 +133,7 @@ if(topic == undefined)
 else
     {
         // avoid echo updates to the topic if we're typing
-    if(gameState.lastClientUpdate != clientId)
+    if((gameState.lastClientUpdate != clientId) || topic == "" || topic == undefined)
         $('#txtTopic').val(topic);
 
     $('#topic').text(topic);
