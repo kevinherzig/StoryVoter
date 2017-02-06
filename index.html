@@ -1,12 +1,14 @@
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <title>votr</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <script>
-function startVotr()
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<script>
+  function startVotr()
 {
   var sessionId = document.getElementById('sessionid').value
   if(isNaN(sessionId))
@@ -15,15 +17,29 @@ function startVotr()
   }
   location.href = './session/' + sessionId;
 }
-    </script>
+</script>
 
-  </head>
+</head>
+
 <body>
-  <img src="/votr.png">
-    <div>Enter your session id or leave blank to start a new session.</div>
-    <input id="sessionid"></input>
-    <button id="start" onclick="startVotr();">Start votr</button>
+   <div class="container">
+  <div class="text-center">
+    <img src="/votr.png" class="img-responsive">
+  </div>
+  <br>
+ 
+    <div class="form-group">
+      <div>Enter your session id or leave blank to start a new session.</div>
+      <input id="sessionid"></input>
+      <button id="start" onclick="startVotr();">Start votr</button>
+    </div>
 
+  </div>
+  <script src="/js/jquery-3.1.1.min.js"></script>
+  <script src="/js/bootstrap.js"></script>
+  <script src="/js/js.cookie.js"></script>
+  <script src="/js/client.js"></script>
 
-  </body>
+</body>
+
 </html>
