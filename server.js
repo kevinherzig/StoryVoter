@@ -81,6 +81,10 @@ wss.on('connection', function connection(conn) {
     // Broadcast to everyone else.
     ProcessClientMessage(data, this);
   });
+
+  conn.on('close', function () {
+    console.log('disconnect');
+  });
 });
 
 wss.installHandlers(server, { prefix: '/sockets' });
@@ -186,6 +190,11 @@ function ProcessClientMessage(m, socket) {
   for (var aSocket in thisSessionObject.clientSocketArray) {
     if (thisSessionObject.clientSocketArray[aSocket].readyState == 1)
       thisSessionObject.clientSocketArray[aSocket].write(JSON.stringify(thisSessionObject.gameState));
+    else {
+      // if socket is closed, remove them from the state.
+      delete thisSessionObject.gameState.clientStateArray[aSocket];
+      delete thisSessionObject.clientSocketArray[aSocket];
+    }
   }
 }
 
