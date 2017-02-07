@@ -109,9 +109,9 @@ function GetSessionObject(SessionId) {
 
   if (s.gameState == undefined) {
     s.gameState = new Object();
-    s.topic = "";
+    s.topic = "New Topic";
     s.notes = "";
-    s.hidden = true;
+    s.gameState.hidden = true;
     s.gameState.clientStateArray = new Object();
   }
   sessionCache.set(SessionId, s)
