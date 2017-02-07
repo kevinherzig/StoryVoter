@@ -107,6 +107,7 @@ function GetSessionObject(SessionId) {
     s.gameState = new Object();
     s.topic = "";
     s.notes = "";
+    s.hidden = true;
     s.gameState.clientStateArray = new Object();
   }
   sessionCache.set(SessionId, s)
@@ -151,8 +152,11 @@ function ProcessClientMessage(m, socket) {
       thisClientsState.vote = o.value;
       break;
 
-    case "HIDEALL":
-      thisSessionObject.gameState.clientStateArray.forEach((clientState) => { clientState.visible = false; });
+    case "SHOWHIDE":
+      if (thisSessionObject.gameState.hidden)
+        thisSessionObject.gameState.hidden = false
+      else
+        thisSessionObject.gameState.hidden = true;
       break;
 
     case "CLEARALL":
@@ -161,9 +165,11 @@ function ProcessClientMessage(m, socket) {
         thisSessionObject.gameState.clientStateArray[clientId].vote = undefined;
         thisSessionObject.gameState.topic = "";
       }
+      thisSessionObject.gameState.hidden = true;
       break;
 
     case "SHOWALL":
+
       break;
 
     case "TOPIC":

@@ -32,20 +32,14 @@ function SendVote(voteValue) {
     sendToServer();
 }
 
-function SendHideAll() {
-    message.command = "HIDEALL";
+function SendShowHide() {
+    message.command = "SHOWHIDE";
     message.value = undefined;
     sendToServer()
 }
 
 function SendClearAll() {
     message.command = "CLEARALL";
-    message.value = undefined;
-    sendToServer();
-}
-
-function SendShowAllVotes() {
-    message.command = "SHOWALL";
     message.value = undefined;
     sendToServer();
 }
@@ -80,7 +74,7 @@ function SetupSockets() {
     var socketHost = "http://" + window.document.location.host + "/sockets"
     ws = new SockJS(socketHost);
 
-    ws.onopen = function()  {
+    ws.onopen = function () {
         uiSetServerStatus('Connected.')
         // Keep the TCP Socket connection alive
         setInterval(SendKeepAlive, 1000 * 60);
@@ -93,7 +87,7 @@ function SetupSockets() {
         processServerMessage(JSON.parse(event.data));
     };
 
-    ws.onerror = function(ev) {
+    ws.onerror = function (ev) {
         uiSetServerStatus('An error occurred.  Please refresh the page.')
     }
 
@@ -123,24 +117,22 @@ function processServerMessage(message) {
 }
 
 function UpdateGame(gameState) {
-var topic = gameState.topic;
+    var topic = gameState.topic;
 
-if(topic == undefined)
-{
-    $('#txtTopic').text = '';
-    $('#topic').innerText = "No Topic"
-}
-else
-    {
-        // avoid echo updates to the topic if we're typing
-    if((gameState.lastClientUpdate != clientId) || topic == "" || topic == undefined)
-        $('#txtTopic').val(topic);
-
-    $('#topic').text(topic);
+    if (topic == undefined) {
+        $('#txtTopic').text = '';
+        $('#topic').innerText = "No Topic"
     }
-var grid = $('#tableBody');
+    else {
+        // avoid echo updates to the topic if we're typing
+        if ((gameState.lastClientUpdate != clientId) || topic == "" || topic == undefined)
+            $('#txtTopic').val(topic);
 
-grid.empty()
+        $('#topic').text(topic);
+    }
+    var grid = $('#tableBody');
+
+    grid.empty()
     for (var client in gameState.clientStateArray) {
         state = gameState.clientStateArray[client];
         var client = '<tr><td>';
@@ -153,9 +145,12 @@ grid.empty()
         client = client + '</td><td>';
 
         if (state.vote == undefined)
-            client = client + "None";
+            client = client + "No Vote";
         else
-            client = client + state.vote;
+            if (gameState.hidden)
+                client = client + "Hidden"
+            else
+                client = client + state.vote;
 
         client = client + '</td></tr>';
         grid.append(client);
