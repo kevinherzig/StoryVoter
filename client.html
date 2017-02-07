@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link href="https://fonts.googleapis.com/css?family=Fira+Sans+Condensed" rel="stylesheet" type="text/css">
   <link href="/css/bootstrap.css" rel="stylesheet">
   <link href="/css/docs.min.css" rel="stylesheet">
@@ -14,67 +15,93 @@
   </style>
 </head>
 
-<body onload="InitDocument();">
+<body onload="InitDocument();" style="background: white">
   <div class="text-center">
-    <img src="/votr.png" class=".img-fluid" style="max-width: 100%">
-
-    <div class="container">
+  <img src="/votr2.png" class="img-fluid" style="max-width: 100%">
+    <div class="container-fluid">
       <div class="page-header">
         <div id="sessionId">Session</div>
         <div id='serverConnectionStatus'>Not Connected</div>
       </div>
     </div>
-    <div class="bd-example" data-example-id="">
-      <div class="form-group">
-        <label for="txtTopic">Vote Topic:</label>
-        <input type="text" class="form-control" id="txtTopic" onkeyup="SendTopic(this.value)">
-
-
-        <label for="txtMyName">My Name:</label>
-        <input type="text" class="form-control" id="txtMyName" onkeyup="SendName(this.value)">
-        <br>
-        <button onclick="SendClearAll();">Clear Votes</button><br>
-        <br>
-        <div class="btn-toolbar" role="toolbar">
-          <div class="btn-group btn-group-sm" role="group">
-            <button onclick="SendVote(this.value);" value="1">1</button>
-            <button onclick="SendVote(this.value);" value="3">3</button>
-            <button onclick="SendVote(this.value);" value="5">5</button>
-            <button onclick="SendVote(this.value);" value="8">8</button>
-            <button onclick="SendVote(this.value);" value="13">13</button>
-            <button onclick="SendVote(this.value);" value="21">21</button>
-            <button onclick="SendVote(this.value);" value="34">34</button>
-            <button onclick="SendVote(this.value);" value="55">55</button>
-            <button onclick="SendVote(this.value);" value="89">89</button>
-          </div>
+    <div class="container-fluid">
+      <div class="form-group row">
+        <label for="txtTopic" class="col-sm-2 col-form-label">Vote Topic:</label>
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="txtTopic" onkeyup="SendTopic(this.value)">
         </div>
-        <div id='topic' class=".p1">No Topic</div><br>
-        <table class="table" border="1">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Vote</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody">
-          </tbody>
+      </div>
 
-        </table>
+      <div class="form-group row">
+        <label for="txtMyName" class="col-sm-2 col-form-label">My Name:</label>
 
+        <div class="col-sm-10">
+          <input type="text" class="form-control" id="txtMyName" onkeyup="SendName(this.value)">
+        </div>
+      </div>
+     
+
+      <div class="container">
+        <div class="row">
+          <div class="col">Vote by clicking one of the buttons below!</div>
+        </div>
+        <div class="row">
+          <div class="col">
+
+            <div class="btn-group" role="group">
+              <button onclick="SendVote(this.value);" value="1" class="btn btn-primary">1</button>
+              <button onclick="SendVote(this.value);" value="2" class="btn btn-primary">2</button>
+              <button onclick="SendVote(this.value);" value="3" class="btn btn-primary">3</button>
+              <button onclick="SendVote(this.value);" value="5" class="btn btn-primary">5</button>
+              <button onclick="SendVote(this.value);" value="8" class="btn btn-primary">8</button>
+              <button onclick="SendVote(this.value);" value="13" class="btn btn-primary">13</button>
+              <button onclick="SendVote(this.value);" value="21" class="btn btn-primary">21</button>
+              <button onclick="SendVote(this.value);" value="34" class="btn btn-primary">34</button>
+              <button onclick="SendVote(this.value);" value="55" class="btn btn-primary">55</button>
+              <button onclick="SendVote(this.value);" value="89" class="btn btn-primary">89</button>
+
+            </div>
+          </div>
+
+        </div>
+
+         <div class="row">
+        <div class="col">
+        <button class="btn" onclick="SendClearAll();">Clear Everyones Votes</button><br>
+      </div>
+      </div>
+        <div class="row"><div class="col">
+          <div id='topic' class="">No Topic</div>
+        </div>
       </div>
     </div>
 
+    <table class="table table-striped table-bordered table-sm">
+      <thead class="thead-inverse">
+        <tr>
+          <th>Name</th>
+          <th>Vote</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+      </tbody>
+    </table>
 
-    <footer class="footer">
-      <div class="text-center">
-        <span class="" style="font-size: 12px; background:darkblue; color: white">VOTR Agile Team Story Pointing System by Kevin Herzig</span>
-      </div>
-    </footer>
-    <script src="/js/sockjs.min.js"></script>
-    <script src="/js/jquery-3.1.1.min.js"></script>
-    <script src="/js/bootstrap.js"></script>
-    <script src="/js/js.cookie.js"></script>
-    <script src="/js/client.js"></script>
+  </div>
+</div>
+
+
+
+<footer class="footer">
+  <div class="text-center">
+    <span class="" style="font-size: 12px; color: darkgray">StoryVoter.com by Kevin Herzig</span>
+  </div>
+</footer>
+<script src="/js/sockjs.min.js"></script>
+<script src="/js/jquery-3.1.1.min.js"></script>
+<script src="/js/bootstrap.js"></script>
+<script src="/js/js.cookie.js"></script>
+<script src="/js/client.js"></script>
 </body>
 
 </html>
