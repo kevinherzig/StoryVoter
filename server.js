@@ -19,9 +19,10 @@ var nextSessionId = 100;
 var sessionFile = './sessionId.json';
 try {
   var nextSessionId = jsonfile.readFileSync(sessionFile);
+  console.log('Read session id ' + nextSessionId + ' from sessionId.json');
 }
 catch (err) {
-  console.log('Could not read session file, defaulting')
+  console.log('Could not read session file, defaulting to 100')
 }
 
 
@@ -203,8 +204,10 @@ function ProcessClientMessage(m, socket) {
 // i.e. wait for existing connections
 function gracefulShutdown() {
   console.log("Received kill signal, shutting down gracefully.");
+  console.log('Saving sessionId.json');
   try {
     jsonfile.writeFileSync(sessionFile, nextSessionId);
+    console.log('Successfully wrote session file');
   }
   catch (err) {
     console.log('Could not write session file' + err);
