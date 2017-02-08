@@ -33,15 +33,15 @@ const uuidV4 = require('uuid');
 
 
 var nextSessionId = 100;
-var sessionFile = './sessionId.json';
+var sessionFileName = './sessionId.json';
+var eventLogName = './eventLog.json';
 try {
-  var nextSessionId = jsonfile.readFileSync(sessionFile);
+  var nextSessionId = jsonfile.readFileSync(sessionFileName);
   console.log('Read session id ' + nextSessionId + ' from sessionId.json');
 }
 catch (err) {
   console.log('Could not read session file, defaulting to 100')
 }
-
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
 
@@ -83,10 +83,7 @@ app.get("/session", (req, res) => {
   res.redirect('/session/' + newSession);
 });
 
-
-
 app.use(express.static('html'));
-
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
@@ -105,8 +102,14 @@ wss.on('connection', function connection(conn) {
   });
 });
 
+
+//////////////////////////////////////  CONNECT THE SOCKETS SERVER
+
 wss.installHandlers(server, { prefix: '/sockets' });
 //////////////////////////////////////  HANDLE AN INCOMING MESSAGE
+
+
+//////////////////////////////////////  PUSH A NEW COOKIE WITH CLIENT ID 
 
 function attach_votr_cookie(req, res, next) {
   if (req.cookies.votr_user == undefined)
@@ -114,66 +117,79 @@ function attach_votr_cookie(req, res, next) {
   next();
 }
 
+//////////////////////////////////////  GET / CREATE SESSION OBJECT
 
 function GetSessionObject(SessionId) {
-  var s = sessionCache.get(SessionId);
+  var session = sessionCache.get(SessionId);
 
-  if (s == undefined) {
-    s = new Object();
+  // If the session is not in the cache, create it
+  if (session == undefined) {
+    session = new Object();
+
+    // Place the object into the cache
+    sessionCache.set(SessionId, session)
   }
 
-  if (s.clientSocketArray == undefined)
-    s.clientSocketArray = new Object();
+  // Create the client socket array if necessary
+  if (session.clientSocketArray == undefined)
+    session.clientSocketArray = new Object();
 
-  if (s.gameState == undefined) {
-    s.gameState = new Object();
-    s.topic = "New Topic";
-    s.notes = "";
-    s.gameState.hidden = true;
-    s.gameState.clientStateArray = new Object();
+  // If the session is new create and initialize the game state
+  if (session.gameState == undefined) {
+    session.gameState = new Object();
+    session.topic = "New Topic";
+    session.gameState.hidden = true;
+    session.gameState.clientStateArray = new Object();
   }
-  sessionCache.set(SessionId, s)
 
-  return s;
+  return session;
 }
 
 
 
 function ProcessClientMessage(m, socket) {
 
-  var o = JSON.parse(m);
+  // Convert the JSON message to an object
+  var message = JSON.parse(m);
 
-  var clientId = o.clientId;
-  var sessionId = o.sessionId;
+  // Write the object to a log
+  jsonfile.writeFile(eventLogName, m);
+
+  // Extract the client and session id's
+  var clientId = message.clientId;
+  var sessionId = message.sessionId;
 
   var thisSessionObject = GetSessionObject(sessionId);
 
-
+  // If this is the first message from this client, add the client to the game
   var thisClientsState = thisSessionObject.gameState.clientStateArray[clientId];
   if (thisClientsState == undefined) {
     thisClientsState = new Object();
-
     thisSessionObject.gameState.clientStateArray[clientId] = thisClientsState;
-
   }
 
+  // Add the client socket to the state object too
   thisSessionObject.clientSocketArray[clientId] = socket;
 
-  console.log(m);
+  //console.log(m);
 
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
   //  Client message processor
-  // Extract the client and session id's
 
-  switch (o.command) {
+  // Process the message and update the game state accordingly
+  switch (message.command) {
+
+    // Client is changing their name
     case "NAME":
-      thisClientsState.name = o.value;
+      thisClientsState.name = message.value;
       break;
 
+// Client is sending a vote
     case "VOTE":
-      thisClientsState.vote = o.value;
+      thisClientsState.vote = message.value;
       break;
 
+// Client requesting to show or hide all votes
     case "SHOWHIDE":
       if (thisSessionObject.gameState.hidden)
         thisSessionObject.gameState.hidden = false
@@ -181,6 +197,8 @@ function ProcessClientMessage(m, socket) {
         thisSessionObject.gameState.hidden = true;
       break;
 
+
+// New vote
     case "CLEARALL":
 
       for (var clientId in thisSessionObject.gameState.clientStateArray) {
@@ -190,21 +208,23 @@ function ProcessClientMessage(m, socket) {
       thisSessionObject.gameState.hidden = true;
       break;
 
-    case "SHOWALL":
-
-      break;
-
+// Client is changing the topic
     case "TOPIC":
-      thisSessionObject.gameState.topic = o.value;
+      thisSessionObject.gameState.topic = message.value;
       break;
 
+// Client is pinging the server to keep socket connection alive
     case "PING":
       break;
   }
+
+  // This tells the clients who sent the update
   thisSessionObject.gameState.lastClientUpdate = clientId;
 
+// Update the cache - not sure if this is needed
   sessionCache.set(sessionId, thisSessionObject);
 
+// Broadcast the game state to all listening clients
   for (var aSocket in thisSessionObject.clientSocketArray) {
     if (thisSessionObject.clientSocketArray[aSocket].readyState == 1)
       thisSessionObject.clientSocketArray[aSocket].write(JSON.stringify(thisSessionObject.gameState));
@@ -217,13 +237,14 @@ function ProcessClientMessage(m, socket) {
 }
 
 
-// this function is called when you want the server to die gracefully
-// i.e. wait for existing connections
+// When the server is shutting down, write the current session id to
+// a file.  This let's us keep a counter as to how many sessions we've
+// done.
 function gracefulShutdown() {
   console.log("Received kill signal, shutting down gracefully.");
   console.log('Saving sessionId.json');
   try {
-    jsonfile.writeFileSync(sessionFile, nextSessionId);
+    jsonfile.writeFileSync(sessionFileName, nextSessionId);
     console.log('Successfully wrote session file');
   }
   catch (err) {
