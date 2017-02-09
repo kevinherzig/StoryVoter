@@ -193,7 +193,6 @@ function ProcessClientMessage(m, socket) {
     // Client is changing their name
     case "NAME":
       thisClientsState.name = message.value;
-      thisClientsState.blink = true;
       break;
 
 // Client is sending a vote
@@ -228,7 +227,6 @@ function ProcessClientMessage(m, socket) {
 // Client is changing the topic
     case "TOPIC":
       thisSessionObject.gameState.topic = message.value;
-      thisClientsState.blink = true;
       break;
 
 // Client is pinging the server to keep socket connection alive
