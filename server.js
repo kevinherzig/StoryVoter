@@ -22,6 +22,7 @@ var ws = require("sockjs");
 var jsonfile = require('jsonfile');
 const NodeCache = require("node-cache");
 var http = require('http');
+var fs = require('fs');
 
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
@@ -35,6 +36,8 @@ const uuidV4 = require('uuid');
 var nextSessionId = 100;
 var sessionFileName = './sessionId.json';
 var eventLogName = './eventLog.json';
+var stream = fs.createWriteStream(eventLogName);
+
 try {
   var nextSessionId = jsonfile.readFileSync(sessionFileName);
   console.log('Read session id ' + nextSessionId + ' from sessionId.json');
@@ -153,7 +156,7 @@ function ProcessClientMessage(m, socket) {
   var message = JSON.parse(m);
 
   // Write the object to a log
-  jsonfile.writeFile(eventLogName, m);
+  stream.write(m + '\n');
 
   // Extract the client and session id's
   var clientId = message.clientId;
@@ -173,20 +176,30 @@ function ProcessClientMessage(m, socket) {
 
   //console.log(m);
 
+  // Clear all of the client blink states so we don't blink 'em twice
+
+        for (var clientId in thisSessionObject.gameState.clientStateArray) {
+        thisSessionObject.gameState.clientStateArray[clientId].blink = false;
+      }
+
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
   //  Client message processor
 
   // Process the message and update the game state accordingly
+
+
   switch (message.command) {
 
     // Client is changing their name
     case "NAME":
       thisClientsState.name = message.value;
+      thisClientsState.blink = true;
       break;
 
 // Client is sending a vote
     case "VOTE":
       thisClientsState.vote = message.value;
+      thisClientsState.blink = true;
       break;
 
 // Client requesting to show or hide all votes
@@ -195,6 +208,8 @@ function ProcessClientMessage(m, socket) {
         thisSessionObject.gameState.hidden = false
       else
         thisSessionObject.gameState.hidden = true;
+      
+      thisClientsState.blink = true;
       break;
 
 
@@ -206,11 +221,14 @@ function ProcessClientMessage(m, socket) {
         thisSessionObject.gameState.topic = "";
       }
       thisSessionObject.gameState.hidden = true;
+      
+      thisClientsState.blink = true;
       break;
 
 // Client is changing the topic
     case "TOPIC":
       thisSessionObject.gameState.topic = message.value;
+      thisClientsState.blink = true;
       break;
 
 // Client is pinging the server to keep socket connection alive
@@ -246,6 +264,8 @@ function gracefulShutdown() {
   try {
     jsonfile.writeFileSync(sessionFileName, nextSessionId);
     console.log('Successfully wrote session file');
+
+    stream.end();
   }
   catch (err) {
     console.log('Could not write session file' + err);

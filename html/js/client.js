@@ -155,27 +155,45 @@ function UpdateGame(gameState) {
     var grid = $('#tableBody');
 
     grid.empty()
+
+    var clientBlink = undefined;
+
     for (var client in gameState.clientStateArray) {
+
+        // Server is telling us to blink this guy
+  
+
         state = gameState.clientStateArray[client];
-        var client = '<tr><td>';
+
+      if (state.blink == true)
+            clientBlink = client;
+
+        var clientGrid = '<tr id="' + client + '"><td>';
 
         if (state.name == undefined || state.name == "")
-            client = client + "Anonymous"
+            clientGrid = clientGrid + "Anonymous"
         else
-            client = client + state.name;
+            clientGrid = clientGrid + state.name;
 
-        client = client + '</td><td>';
+        clientGrid = clientGrid + '</td><td>';
 
         if (state.vote == undefined)
-            client = client + "No Vote";
+            clientGrid = clientGrid + "No Vote";
         else
             if (gameState.hidden)
-                client = client + "Hidden"
+                clientGrid = clientGrid + "Hidden"
             else
-                client = client + state.vote;
+                clientGrid = clientGrid + state.vote;
 
-        client = client + '</td></tr>';
-        grid.append(client);
+        clientGrid = clientGrid + '</td></tr>';
+        grid.append(clientGrid);
+    }
+
+    if (clientBlink != undefined) {
+        //$('#' + clientBlink).fadeOut();
+        //$('#' + clientBlink).fadeIn();
+        $('#' + clientBlink).animate({color: "red",backgroundColor: "#0000ff"}, 100);
+        $('#' + clientBlink).animate({color: "black",backgroundColor: "#eceeef"}, 100);
     }
 
 }
