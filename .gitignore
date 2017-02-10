@@ -54,3 +54,4 @@ jspm_packages
 .env
 
 .DS_Store
+typings
