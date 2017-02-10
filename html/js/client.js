@@ -97,7 +97,9 @@ function SetupSockets() {
     ws = new SockJS(socketHost);
 
     ws.onopen = function () {
-        uiSetServerStatus('Connected.')
+        var serverDiv = $('#serverConnectionStatus');
+        serverDiv.text('Server connection status: You are connected.');
+        serverDiv.css('background-color', 'green');
         // Keep the TCP Socket connection alive
         setInterval(SendKeepAlive, 1000 * 60);
 
@@ -110,11 +112,15 @@ function SetupSockets() {
     };
 
     ws.onerror = function (ev) {
-        uiSetServerStatus('An error occurred.  Please refresh the page.')
+        var serverDiv = $('#serverConnectionStatus');
+        serverDiv.text('Server connection status: You were disconnected with an error.  Please refresh the page to reconnect.');
+        serverDiv.css('background-color', 'darkRed');
     }
 
     ws.onclose = function () {
-        uiSetServerStatus("You were disconnected.  Refresh the page to reconnect.");
+        var serverDiv = $('#serverConnectionStatus');
+        serverDiv.text('Server connection status: You are disconnected.  Please refresh the page to reconnect.');
+        serverDiv.css('background-color', 'darkRed');
     };
 }
 
@@ -130,7 +136,7 @@ function SetSessionId() {
 //////////////////////////////////////  UI UPDATE FUNCTIONS
 
 function uiSetServerStatus(status) {
-    $('#serverConnectionStatus').text('Server connection status: ' + status);
+
 }
 
 
@@ -161,11 +167,11 @@ function UpdateGame(gameState) {
     for (var client in gameState.clientStateArray) {
 
         // Server is telling us to blink this guy
-  
+
 
         state = gameState.clientStateArray[client];
 
-      if (state.blink == true)
+        if (state.blink == true)
             clientBlink = client;
 
         var clientGrid = '<tr id="' + client + '"><td>';
@@ -192,8 +198,8 @@ function UpdateGame(gameState) {
     if (clientBlink != undefined) {
         //$('#' + clientBlink).fadeOut();
         //$('#' + clientBlink).fadeIn();
-        $('#' + clientBlink).animate({color: "red",backgroundColor: "#0000ff"}, 100);
-        $('#' + clientBlink).animate({color: "black",backgroundColor: "#eceeef"}, 100);
+        $('#' + clientBlink).animate({ color: "red", backgroundColor: "#0000ff" }, 100);
+        $('#' + clientBlink).animate({ color: "black", backgroundColor: "#eceeef" }, 100);
     }
 
 }

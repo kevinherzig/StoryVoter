@@ -29,29 +29,25 @@
   <link href="https://fonts.googleapis.com/css?family=Fira+Sans+Condensed" rel="stylesheet" type="text/css">
   <link href="/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Fira Sans Condensed', sans-serif;
-    }
+    body {background-image: url("/background.png"); background-repeat:repeat}
+    table{background:white}
   </style>
 </head>
 
-<body onload="InitDocument();" style="background: white">
+<body onload="InitDocument();">
   <div class="container">
-
     <div class="text-center"> <img src="/votr2.png" class="img-fluid" style="max-width: 100%">
       <div class="page-header">
         <div id="sessionId">Session</div>
-        <div id='serverConnectionStatus'>Not Connected</div>
+        <div id='serverConnectionStatus' style="background: darkred; color: white">Not Connected</div>
       </div>
     </div>
-
     <div class="row">
       <label for="txtTopic" class="col-sm-2 col-form-label">Vote Topic:</label>
       <div class="col-sm-10">
         <input type="text" class="form-control" id="txtTopic" onkeyup="SendTopic(this.value)">
       </div>
     </div>
-
     <div class="row">
       <label for="txtMyName" class="col-sm-2 col-form-label">My Name:</label>
       <div class="col-sm-10">
@@ -62,43 +58,41 @@
       <div class="col text-center">Vote by clicking one of the buttons below!</div>
     </div>
     <div class="row">
+      <div class="col-xs-1"></div>
       <div class="col-xs-2"><button onclick="SendVote(this.value);" value="1" class="btn btn-primary btn-sm btn-block">1</button></div>
       <div class="col-xs-2"><button onclick="SendVote(this.value);" value="2" class="btn btn-primary btn-sm btn-block">2</button></div>
       <div class="col-xs-2"><button onclick="SendVote(this.value);" value="3" class="btn btn-primary btn-sm btn-block">3</button></div>
       <div class="col-xs-2"><button onclick="SendVote(this.value);" value="5" class="btn btn-primary btn-sm btn-block">5</button></div>
       <div class="col-xs-2"><button onclick="SendVote(this.value);" value="8" class="btn btn-primary btn-sm btn-block">8</button></div>
-      <div class="col-xs-2"><button onclick="SendVote(this.value);" value="13" class="btn btn-primary btn-sm btn-block">13</button></div>
+      <div class="col-xs-1"></div>
     </div>
-
     <p>
       <div class="row">
+        <div class="col-xs-1"></div>
+        <div class="col-xs-2"><button onclick="SendVote(this.value);" value="13" class="btn btn-primary btn-sm btn-block">13</button></div>
         <div class="col-xs-2"><button onclick="SendVote(this.value);" value="21" class="btn btn-primary btn-sm btn-block">21</button></div>
         <div class="col-xs-2"><button onclick="SendVote(this.value);" value="34" class="btn btn-primary btn-sm btn-block">34</button></div>
         <div class="col-xs-2"><button onclick="SendVote(this.value);" value="55" class="btn btn-primary btn-sm btn-block">55</button></div>
         <div class="col-xs-2"><button onclick="SendVote(this.value);" value="89" class="btn btn-primary btn-sm btn-block">89</button></div>
+        <div class="col-xs-1"></div>
       </div>
-
       <p>
         <div class="row">
-
           <div class="col-xs-4">
             <button class="btn btn-success btn-sm btn-block" onclick="SendShowHide();">Show/Hide Votes</button>
           </div>
           <div class="col-xs-4"></div>
-
           <div class="col-xs-4">
             <button class="btn btn-danger btn-sm btn-block" onclick="SendClearAll();">Clear All</button>
           </div>
-
         </div>
-
+        <p></p>
         <div class="row">
           <div class="col">
-            <div id='topic' class="">No Topic</div>
+            <div class="text-center"><div id='topic' style="font-weight: bold; background: black; color: white">No Topic</div></div>
           </div>
         </div>
-
-
+        <p></p>
         <table class="table table-bordered table-sm" style="table-layout: fixed">
           <thead class="thead-inverse">
             <tr>
@@ -124,5 +118,4 @@
   <script src="/js/sockjs.min.js"></script>
   <script src="/js/client.js"></script>
 </body>
-
 </html>
