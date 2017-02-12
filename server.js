@@ -234,6 +234,27 @@ function ProcessClientMessage(m, socket) {
       break;
   }
 
+// Let's see if we have consensus, and if we do, set a flag
+var currentVote = thisSessionObject.gameState.clientStateArray[0];
+var clientCount = 0;
+var consensus = -1;
+    for (var clientId in thisSessionObject.gameState.clientStateArray) {
+      
+      clientCount++;
+      
+      if(consensus == -1)
+      {
+        currentVote = thisSessionObject.gameState.clientStateArray[clientId].vote;
+        consensus = 1;
+      }
+        var vote = thisSessionObject.gameState.clientStateArray[clientId].vote;
+        if(vote == undefined || vote != currentVote || vote == '?')
+          consensus = 0;
+    }
+
+thisSessionObject.gameState.consensus = ((consensus == 1) && (clientCount > 1));
+
+
   // This tells the clients who sent the update
   thisSessionObject.gameState.lastClientUpdate = clientId;
 

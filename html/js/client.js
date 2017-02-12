@@ -158,6 +158,20 @@ function UpdateGame(gameState) {
 
         $('#topic').text(topic);
     }
+
+if(gameState.consensus)
+    {
+        $('#consensus').css('background', '#060');
+        $('#consensus').css('color', '#fff');
+        $('#consensus').text('Consensus!')
+    }
+else
+{
+        $('#consensus').css('background-color', '');
+        $('#consensus').css('background', 'white');
+        $('#consensus').text('')
+    }
+
     var grid = $('#tableBody');
 
     grid.empty()
