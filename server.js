@@ -90,7 +90,7 @@ app.use(express.static('html'));
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const wss = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
+const wss = new ws.createServer(() => {
   console.log('Sockets server listening on port 8001');
 });
 wss.on('connection', function connection(conn) {
@@ -105,15 +105,12 @@ wss.on('connection', function connection(conn) {
   });
 });
 
-
 //////////////////////////////////////  CONNECT THE SOCKETS SERVER
-
 wss.installHandlers(server, { prefix: '/sockets' });
 //////////////////////////////////////  HANDLE AN INCOMING MESSAGE
 
 
 //////////////////////////////////////  PUSH A NEW COOKIE WITH CLIENT ID 
-
 function attach_votr_cookie(req, res, next) {
   if (req.cookies.votr_user == undefined)
     res.cookie("votr_user", uuidV4());
@@ -121,7 +118,6 @@ function attach_votr_cookie(req, res, next) {
 }
 
 //////////////////////////////////////  GET / CREATE SESSION OBJECT
-
 function GetSessionObject(SessionId) {
   var session = sessionCache.get(SessionId);
 
@@ -134,8 +130,8 @@ function GetSessionObject(SessionId) {
   }
 
   // Create the client socket array if necessary
-  if (session.clientSocketArray == undefined)
-    session.clientSocketArray = new Object();
+  if (session.clientSockets == undefined)
+    session.clientSockets = new Object();
 
   // If the session is new create and initialize the game state
   if (session.gameState == undefined) {
@@ -149,7 +145,7 @@ function GetSessionObject(SessionId) {
 }
 
 
-
+//////////////////////////////////////  Message Processing Loop
 function ProcessClientMessage(m, socket) {
 
   // Convert the JSON message to an object
@@ -164,27 +160,29 @@ function ProcessClientMessage(m, socket) {
 
   var thisSessionObject = GetSessionObject(sessionId);
 
+  var gameState = thisSessionObject.gameState;
+  var clientSockets = thisSessionObject.clientSockets;
+
   // If this is the first message from this client, add the client to the game
-  var thisClientsState = thisSessionObject.gameState.clientStateArray[clientId];
+  var thisClientsState = gameState.clientStateArray[clientId];
   if (thisClientsState == undefined) {
     thisClientsState = new Object();
-    thisSessionObject.gameState.clientStateArray[clientId] = thisClientsState;
+    gameState.clientStateArray[clientId] = thisClientsState;
   }
 
   // Add the client socket to the state object too
-  thisSessionObject.clientSocketArray[clientId] = socket;
+  clientSockets[clientId] = socket;
 
-  //console.log(m);
+  console.log(m);
 
   // Clear all of the client blink states so we don't blink 'em twice
 
-        for (var clientId in thisSessionObject.gameState.clientStateArray) {
-        thisSessionObject.gameState.clientStateArray[clientId].blink = false;
-      }
+  for (var clientId in gameState.clientStateArray) {
+    gameState.clientStateArray[clientId].blink = false;
+  }
 
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
   //  Client message processor
-
   // Process the message and update the game state accordingly
 
 
@@ -195,89 +193,88 @@ function ProcessClientMessage(m, socket) {
       thisClientsState.name = message.value;
       break;
 
-// Client is sending a vote
+    // Client is sending a vote
     case "VOTE":
       thisClientsState.vote = message.value;
       thisClientsState.blink = true;
       break;
 
-// Client requesting to show or hide all votes
+    // Client requesting to show or hide all votes
     case "SHOWHIDE":
-      if (thisSessionObject.gameState.hidden)
-        thisSessionObject.gameState.hidden = false
+      if (gameState.hidden)
+        gameState.hidden = false
       else
-        thisSessionObject.gameState.hidden = true;
-      
+        gameState.hidden = true;
+
       thisClientsState.blink = true;
       break;
 
 
-// New vote
+    // New vote
     case "CLEARALL":
 
-      for (var clientId in thisSessionObject.gameState.clientStateArray) {
-        thisSessionObject.gameState.clientStateArray[clientId].vote = undefined;
-        thisSessionObject.gameState.topic = "";
+      for (var clientId in gameState.clientStateArray) {
+        gameState.clientStateArray[clientId].vote = undefined;
+        gameState.topic = "";
       }
-      thisSessionObject.gameState.hidden = true;
-      
+      gameState.hidden = true;
+
       thisClientsState.blink = true;
       break;
 
-// Client is changing the topic
+    // Client is changing the topic
     case "TOPIC":
-      thisSessionObject.gameState.topic = message.value;
+      gameState.topic = message.value;
       break;
 
-// Client is pinging the server to keep socket connection alive
+    // Client is pinging the server to keep socket connection alive
     case "PING":
       break;
   }
 
-// Let's see if we have consensus, and if we do, set a flag
-var currentVote = thisSessionObject.gameState.clientStateArray[0];
-var clientCount = 0;
-var consensus = -1;
-    for (var clientId in thisSessionObject.gameState.clientStateArray) {
-      
-      clientCount++;
-      
-      if(consensus == -1)
-      {
-        currentVote = thisSessionObject.gameState.clientStateArray[clientId].vote;
-        consensus = 1;
-      }
-        var vote = thisSessionObject.gameState.clientStateArray[clientId].vote;
-        if(vote == undefined || vote != currentVote || vote == '?')
-          consensus = 0;
+  // Let's see if we have consensus, and if we do, set a flag
+  var currentVote = gameState.clientStateArray[0];
+  var clientCount = 0;
+  var consensus = -1;
+
+  for (var clientId in gameState.clientStateArray) {
+    
+    clientCount++;
+
+    if (consensus == -1) {
+      currentVote = gameState.clientStateArray[clientId].vote;
+      consensus = 1;
     }
+    var vote = gameState.clientStateArray[clientId].vote;
+    if (vote == undefined || vote != currentVote || vote == '?')
+      consensus = 0;
+  }
 
-thisSessionObject.gameState.consensus = ((consensus == 1) && (clientCount > 1));
-
+  gameState.consensus = ((consensus == 1) && (clientCount > 1));
 
   // This tells the clients who sent the update
-  thisSessionObject.gameState.lastClientUpdate = clientId;
+  gameState.lastClientUpdate = clientId;
 
-// Update the cache - not sure if this is needed
+  // Update the cache - not sure if this is needed
   sessionCache.set(sessionId, thisSessionObject);
 
-// Broadcast the game state to all listening clients
-  for (var aSocket in thisSessionObject.clientSocketArray) {
-    if (thisSessionObject.clientSocketArray[aSocket].readyState == 1)
-      thisSessionObject.clientSocketArray[aSocket].write(JSON.stringify(thisSessionObject.gameState));
+  // Broadcast the game state to all listening clients
+  for (var aSocket in clientSockets) {
+    if (clientSockets[aSocket].readyState == 1)
+      clientSockets[aSocket].write(JSON.stringify(gameState));
     else {
       // if socket is closed, remove them from the state.
-      delete thisSessionObject.gameState.clientStateArray[aSocket];
-      delete thisSessionObject.clientSocketArray[aSocket];
+      delete gameState.clientStateArray[aSocket];
+      delete clientSockets[aSocket];
     }
   }
 }
 
-
+//////////////////////////////////////////////////////////////////  SERVER SHUTDOWN
 // When the server is shutting down, write the current session id to
 // a file.  This let's us keep a counter as to how many sessions we've
 // done.
-function gracefulShutdown() {
+function ServerShutdown() {
   console.log("Received kill signal, shutting down gracefully.");
   console.log('Saving sessionId.json');
   try {
@@ -294,7 +291,7 @@ function gracefulShutdown() {
 }
 
 // listen for TERM signal .e.g. kill 
-process.on('SIGTERM', gracefulShutdown);
+process.on('SIGTERM', ServerShutdown);
 
 // listen for INT signal e.g. Ctrl-C
-process.on('SIGINT', gracefulShutdown);
+process.on('SIGINT', ServerShutdown);
