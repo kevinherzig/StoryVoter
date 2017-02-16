@@ -29,8 +29,14 @@
   <link href="https://fonts.googleapis.com/css?family=Fira+Sans+Condensed" rel="stylesheet" type="text/css">
   <link href="/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body {background-image: url("/background.png"); background-repeat:repeat}
-    table{background:white}
+    body {
+      background-image: url("/background.png");
+      background-repeat: repeat
+    }
+    
+    table {
+      background: white
+    }
   </style>
 </head>
 
@@ -42,18 +48,29 @@
         <div id='serverConnectionStatus' style="background: darkred; color: white">Not Connected</div>
       </div>
     </div>
+
     <div class="row">
-      <label for="txtTopic" class="col-sm-2 col-form-label">Vote Topic:</label>
-      <div class="col-sm-10">
-        <input type="text" class="form-control" id="txtTopic" onkeyup="SendTopic(this.value)">
+      <div class="col-sm-2">
+        <label class="">Vote Topic:</label>
+      </div>
+      <div class="col-sm-8">
+        <input type="text" class="form-control" id="txtTopic">
+      </div>
+      <div class="col-sm-2">
+        <button onclick="SendTopic($('#txtTopic').val());">Submit</button>
       </div>
     </div>
+
     <div class="row">
-      <label for="txtMyName" class="col-sm-2 col-form-label">My Name:</label>
-      <div class="col-sm-10">
-        <input type="text" class="form-control" id="txtMyName" onkeyup="SendName(this.value)">
+      <div class="col-sm-2">
+        <label for="txtTopic" class="">My Name:</label>
+      </div>
+      <div class="col-sm-8">
+        <input type="txtMyName" class="form-control" id="txtTopic" onkeyup="SendName(this.value)">
       </div>
     </div>
+
+
     <div class="row">
       <div class="col text-center">Vote by clicking one of the buttons below!</div>
     </div>
@@ -87,12 +104,16 @@
         <p></p>
         <div class="row">
           <div class="col">
-            <div class="text-center"><div id='topic' style="font-weight: bold; background: black; color: white">No Topic</div></div>
+            <div class="text-center">
+              <div id='topic' style="font-weight: bold; background: black; color: white">No Topic</div>
+            </div>
           </div>
         </div>
-            <div class="row">
+        <div class="row">
           <div class="col">
-            <div class="text-center"><div id='consensus'  style="font-weight: bold;"></div></div>
+            <div class="text-center">
+              <div id='consensus' style="font-weight: bold;"></div>
+            </div>
           </div>
         </div>
         <p></p>
@@ -121,4 +142,5 @@
   <script src="/js/sockjs.min.js"></script>
   <script src="/js/client.js"></script>
 </body>
+
 </html>
