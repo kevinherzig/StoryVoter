@@ -23,21 +23,21 @@ var jsonfile = require('jsonfile');
 const NodeCache = require("node-cache");
 var http = require('http');
 var fs = require('fs');
-
-// 3 Hour expiration time
-const sessionExpire = 3 * 60 * 60
-
-const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
-
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
 
+// 3 Hour expiration time
 
-var nextSessionId = 100;
+const sessionExpire = 3 * 60 * 60
+const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
+
+
 var sessionFileName = './sessionId.json';
 var eventLogName = './eventLog.json';
 var stream = fs.createWriteStream(eventLogName);
 
+//  Read the session id that's persisted if any or use the default of 100
+var nextSessionId = 100;
 try {
   var nextSessionId = jsonfile.readFileSync(sessionFileName);
   console.log('Read session id ' + nextSessionId + ' from sessionId.json');
@@ -90,7 +90,7 @@ app.use(express.static('html'));
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const wss = new ws.createServer(() => {
+const wss = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
   console.log('Sockets server listening on port 8001');
 });
 wss.on('connection', function connection(conn) {
