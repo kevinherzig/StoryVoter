@@ -14,8 +14,6 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-
-
 var express = require('express');
 var path = require('path');
 var ws = require("sockjs");
@@ -27,14 +25,13 @@ var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
 
 // 3 Hour expiration time
-
 const sessionExpire = 3 * 60 * 60
 const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
 
 
 var sessionFileName = './sessionId.json';
 var eventLogName = './eventLog.json';
-var stream = fs.createWriteStream(eventLogName);
+var eventFileStream = fs.createWriteStream(eventLogName);
 
 //  Read the session id that's persisted if any or use the default of 100
 var nextSessionId = 100;
@@ -48,9 +45,9 @@ catch (err) {
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
 
-var app = express();
-app.use(cookieParser());
-app.use(attach_votr_cookie);
+var expressApp = express();
+expressApp.use(cookieParser());
+expressApp.use(attach_votr_cookie);
 
 var port = process.argv[2];
 if (port == undefined)
@@ -59,41 +56,41 @@ if (port == undefined)
 if (isNaN(port))
   port = 8000;
 
-app.set('port', port);
+expressApp.set('port', port);
 
-var server = http.createServer(app).listen(app.get('port'), function () {
-  console.log('Express server listening on port ' + app.get('port'));
+var server = http.createServer(expressApp).listen(expressApp.get('port'), function () {
+  console.log('Express server listening on port ' + expressApp.get('port'));
 });
 
 //////////////////////////////////////  Process Routes
 
-app.get('', (req, res) => {
+expressApp.get('', (req, res) => {
   res.sendFile('index.html', { root: '.' });
 });
 
 // Client connected to a session, set a cooookie
-app.get("/session/:id", (req, res) => {
+expressApp.get("/session/:id", (req, res) => {
   res.sendFile('client.html', { root: '.' });
 });
 
-app.get('/session', (req, res) => {
+expressApp.get('/session', (req, res) => {
   res.redirect('/session/' + nextSessionId++);
 });
 
 // Client connected to /session manually, redirct them to a new session id
-app.get("/session", (req, res) => {
+expressApp.get("/session", (req, res) => {
   const newSession = nextSessionId++;
   res.redirect('/session/' + newSession);
 });
 
-app.use(express.static('html'));
+expressApp.use(express.static('html'));
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const wss = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
+const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
   console.log('Sockets server listening on port 8001');
 });
-wss.on('connection', function connection(conn) {
+webSocketServer.on('connection', function connection(conn) {
   console.log('connection' + ws);
   conn.on('data', function incoming(data) {
     // Broadcast to everyone else.
@@ -106,7 +103,7 @@ wss.on('connection', function connection(conn) {
 });
 
 //////////////////////////////////////  CONNECT THE SOCKETS SERVER
-wss.installHandlers(server, { prefix: '/sockets' });
+webSocketServer.installHandlers(server, { prefix: '/sockets' });
 //////////////////////////////////////  HANDLE AN INCOMING MESSAGE
 
 
@@ -118,32 +115,31 @@ function attach_votr_cookie(req, res, next) {
 }
 
 //////////////////////////////////////  GET / CREATE SESSION OBJECT
-function GetSessionObject(SessionId) {
-  var session = sessionCache.get(SessionId);
+function GetSession(SessionId) {
+  var currentSession = sessionCache.get(SessionId);
 
   // If the session is not in the cache, create it
-  if (session == undefined) {
-    session = new Object();
+  if (currentSession == undefined) {
+    currentSession = new Object();
 
     // Place the object into the cache
-    sessionCache.set(SessionId, session)
+    sessionCache.set(SessionId, currentSession)
   }
 
   // Create the client socket array if necessary
-  if (session.clientSockets == undefined)
-    session.clientSockets = new Object();
+  if (currentSession.clientSockets == undefined)
+    currentSession.clientSockets = new Object();
 
   // If the session is new create and initialize the game state
-  if (session.gameState == undefined) {
-    session.gameState = new Object();
-    session.topic = "New Topic";
-    session.gameState.hidden = true;
-    session.gameState.clientStateArray = new Object();
+  if (currentSession.gameState == undefined) {
+    currentSession.gameState = new Object();
+    currentSession.topic = "New Topic";
+    currentSession.gameState.hidden = true;
+    currentSession.gameState.clientStateArray = new Object();
   }
 
-  return session;
+  return currentSession;
 }
-
 
 //////////////////////////////////////  Message Processing Loop
 function ProcessClientMessage(m, socket) {
@@ -152,16 +148,16 @@ function ProcessClientMessage(m, socket) {
   var message = JSON.parse(m);
 
   // Write the object to a log
-  stream.write(m + '\n');
+  eventFileStream.write(m + '\n');
 
   // Extract the client and session id's
   var clientId = message.clientId;
   var sessionId = message.sessionId;
 
-  var thisSessionObject = GetSessionObject(sessionId);
+  var thisSession = GetSession(sessionId);
 
-  var gameState = thisSessionObject.gameState;
-  var clientSockets = thisSessionObject.clientSockets;
+  var gameState = thisSession.gameState;
+  var sessionSockets = thisSession.clientSockets;
 
   // If this is the first message from this client, add the client to the game
   var thisClientsState = gameState.clientStateArray[clientId];
@@ -171,7 +167,7 @@ function ProcessClientMessage(m, socket) {
   }
 
   // Add the client socket to the state object too
-  clientSockets[clientId] = socket;
+  sessionSockets[clientId] = socket;
 
   console.log(m);
 
@@ -184,7 +180,6 @@ function ProcessClientMessage(m, socket) {
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
   //  Client message processor
   // Process the message and update the game state accordingly
-
 
   switch (message.command) {
 
@@ -256,16 +251,16 @@ function ProcessClientMessage(m, socket) {
   gameState.lastClientUpdate = clientId;
 
   // Update the cache - not sure if this is needed
-  sessionCache.set(sessionId, thisSessionObject);
+  sessionCache.set(sessionId, thisSession);
 
   // Broadcast the game state to all listening clients
-  for (var aSocket in clientSockets) {
-    if (clientSockets[aSocket].readyState == 1)
-      clientSockets[aSocket].write(JSON.stringify(gameState));
+  for (var aSocket in sessionSockets) {
+    if (sessionSockets[aSocket].readyState == 1)
+      sessionSockets[aSocket].write(JSON.stringify(gameState));
     else {
       // if socket is closed, remove them from the state.
       delete gameState.clientStateArray[aSocket];
-      delete clientSockets[aSocket];
+      delete sessionSockets[aSocket];
     }
   }
 }
@@ -281,7 +276,7 @@ function ServerShutdown() {
     jsonfile.writeFileSync(sessionFileName, nextSessionId);
     console.log('Successfully wrote session file');
 
-    stream.end();
+    eventFileStream.end();
   }
   catch (err) {
     console.log('Could not write session file' + err);
