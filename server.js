@@ -23,7 +23,10 @@ var http = require('http');
 var fs = require('fs');
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
+const winston = require('winston')
 
+winston.remove(winston.transports.Console);
+winston.add(winston.transports.Console, {'timestamp':true});
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
 const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
@@ -37,10 +40,10 @@ var eventFileStream = fs.createWriteStream(eventLogName);
 var nextSessionId = 100;
 try {
   var nextSessionId = jsonfile.readFileSync(sessionFileName);
-  console.log('Read session id ' + nextSessionId + ' from sessionId.json');
+  winston.info('Read session id ' + nextSessionId + ' from sessionId.json');
 }
 catch (err) {
-  console.log('Could not read session file, defaulting to 100')
+  winston.info('Could not read session file, defaulting to 100')
 }
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
@@ -59,7 +62,7 @@ if (isNaN(port))
 expressApp.set('port', port);
 
 var server = http.createServer(expressApp).listen(expressApp.get('port'), function () {
-  console.log('Express server listening on port ' + expressApp.get('port'));
+  winston.info('Express server listening on port ' + expressApp.get('port'));
 });
 
 //////////////////////////////////////  Process Routes
@@ -88,17 +91,17 @@ expressApp.use(express.static('html'));
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
 const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
-  console.log('Sockets server listening on port 8001');
+  winston.info('Sockets server listening on port 8001');
 });
 webSocketServer.on('connection', function connection(conn) {
-  console.log('connection' + ws);
+  winston.info('connection' + ws);
   conn.on('data', function incoming(data) {
     // Broadcast to everyone else.
     ProcessClientMessage(data, this);
   });
 
   conn.on('close', function () {
-    console.log('disconnect');
+    winston.info('disconnect');
   });
 });
 
@@ -169,7 +172,7 @@ function ProcessClientMessage(m, socket) {
   // Add the client socket to the state object too
   sessionSockets[clientId] = socket;
 
-  console.log(m);
+  winston.info(m);
 
   // Clear all of the client blink states so we don't blink 'em twice
 
@@ -270,16 +273,16 @@ function ProcessClientMessage(m, socket) {
 // a file.  This let's us keep a counter as to how many sessions we've
 // done.
 function ServerShutdown() {
-  console.log("Received kill signal, shutting down gracefully.");
-  console.log('Saving sessionId.json');
+  winston.info("Received kill signal, shutting down gracefully.");
+  winston.info('Saving sessionId.json');
   try {
     jsonfile.writeFileSync(sessionFileName, nextSessionId);
-    console.log('Successfully wrote session file');
+    winston.info('Successfully wrote session file');
 
     eventFileStream.end();
   }
   catch (err) {
-    console.log('Could not write session file' + err);
+    winston.info('Could not write session file' + err);
   }
   process.exit()
 
