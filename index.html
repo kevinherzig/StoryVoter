@@ -1,5 +1,3 @@
-
-
 <!--
 
   Copyright 2017 Kevin Herzig
@@ -22,51 +20,45 @@
     -->
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
-<script>
-
-</script>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link href="https://fonts.googleapis.com/css?family=Fira+Sans+Condensed" rel="stylesheet" type="text/css">
   <link href="/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <script>
-  function startVotr()
-{
-  var sessionId = document.getElementById('sessionid').value
-  if(isNaN(sessionId))
-  {
-      location.href = './session/' + sessionId;
+  function startVotr() {
+    var sessionId = document.getElementById('sessionid').value
+    if (isNaN(sessionId)) {
+      location.href = './session/';
+    }
+    location.href = './session/' + sessionId;
   }
-  location.href = './session/' + sessionId;
-}
+
 </script>
 
 </head>
 
 <body>
 
-   <div class="container">
-  <div class="text-center">
-    <img src="/votr2.png" class="img-responsive">
-  </div>
-  <br>
- 
-    <div class="form-group">
-      <div>Enter your session id or leave blank to start a new session.</div>
-      <input id="sessionid"></input>
-      <button id="start" onclick="startVotr();">Start votr</button>
+  <div class="container">
+    <div class="text-center">
+      <img src="/votr2.png" class="img-responsive">
     </div>
 
+    <div class="form-group">
+      <div>Enter your session id or leave blank to start a new session.</div>
+      <input id="sessionid">
+      <button id="start" onclick="startVotr();">Start Session</button>
+    </div>
   </div>
   <script src="/js/jquery-3.1.1.min.js"></script>
   <script src="/js/bootstrap.min.js"></script>
   <script src="/js/js.cookie.js"></script>
   <script src="/js/client.js"></script>
-
 </body>
 
 </html>
