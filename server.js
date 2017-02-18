@@ -23,12 +23,12 @@ var http = require('http');
 var fs = require('fs');
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
-const logger = require('winston')
+const logger = require('winston');
 
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {'timestamp':true});
 // 3 Hour expiration time
-const sessionExpire = 3 * 60 * 60
+const sessionExpire = 3 * 60 * 60;
 const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
 
 
@@ -200,11 +200,7 @@ function ProcessClientMessage(m, socket) {
 
     // Client requesting to show or hide all votes
     case "SHOWHIDE":
-      if (gameState.hidden)
-        gameState.hidden = false
-      else
-        gameState.hidden = true;
-
+      gameState.hidden = !gameState.hidden;
       thisClientsState.blink = true;
       break;
 

@@ -98,8 +98,8 @@ function SetupSockets() {
 
     ws.onopen = function () {
         var serverDiv = $('#serverConnectionStatus');
-        serverDiv.text('Server connection status: You are connected.');
-        serverDiv.css('background-color', 'green');
+        serverDiv.text('Server status: Connected');
+        serverDiv.addClass('label-success').removeClass('label-danger');
         // Keep the TCP Socket connection alive
         setInterval(SendKeepAlive, 1000 * 60);
 
@@ -113,14 +113,14 @@ function SetupSockets() {
 
     ws.onerror = function (ev) {
         var serverDiv = $('#serverConnectionStatus');
-        serverDiv.text('Server connection status: You were disconnected with an error.  Please refresh the page to reconnect.');
-        serverDiv.css('background-color', 'darkRed');
+        serverDiv.text('You were disconnected with an error.  Please refresh the page.');
+        serverDiv.addClass('label-danger').removeClass('label-success');
     }
 
     ws.onclose = function () {
         var serverDiv = $('#serverConnectionStatus');
-        serverDiv.text('Server connection status: You are disconnected.  Please refresh the page to reconnect.');
-        serverDiv.css('background-color', 'darkRed');
+        serverDiv.text('You are disconnected.  Please refresh the page.');
+        serverDiv.addClass('label-danger').removeClass('label-success');
     };
 }
 
@@ -130,7 +130,7 @@ var sessionId = -1;
 function SetSessionId() {
 
     sessionId = document.URL.slice(document.URL.lastIndexOf('/') + 1);
-    $('#sessionId').text('Your current session ID is ' + sessionId)
+    $('#sessionId').text('Session ID: ' + sessionId)
 }
 
 //////////////////////////////////////  UI UPDATE FUNCTIONS
@@ -178,12 +178,12 @@ else
 
     var clientBlink = undefined;
 
-    for (var client in gameState.clientStateArray) {
+    for (var client in gameState.clientStates) {
 
         // Server is telling us to blink this guy
 
 
-        state = gameState.clientStateArray[client];
+        state = gameState.clientStates[client];
 
         if (state.blink == true)
             clientBlink = client;
