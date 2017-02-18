@@ -23,10 +23,10 @@ var http = require('http');
 var fs = require('fs');
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
-const winston = require('winston')
+const logger = require('winston')
 
-winston.remove(winston.transports.Console);
-winston.add(winston.transports.Console, {'timestamp':true});
+logger.remove(logger.transports.Console);
+logger.add(logger.transports.Console, {'timestamp':true});
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60
 const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
@@ -40,10 +40,10 @@ var eventFileStream = fs.createWriteStream(eventLogName);
 var nextSessionId = 100;
 try {
   var nextSessionId = jsonfile.readFileSync(sessionFileName);
-  winston.info('Read session id ' + nextSessionId + ' from sessionId.json');
+  logger.info('Read session id ' + nextSessionId + ' from sessionId.json');
 }
 catch (err) {
-  winston.info('Could not read session file, defaulting to 100')
+  logger.info('Could not read session file, defaulting to 100')
 }
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
@@ -62,7 +62,7 @@ if (isNaN(port))
 expressApp.set('port', port);
 
 var server = http.createServer(expressApp).listen(expressApp.get('port'), function () {
-  winston.info('Express server listening on port ' + expressApp.get('port'));
+  logger.info('Express server listening on port ' + expressApp.get('port'));
 });
 
 //////////////////////////////////////  Process Routes
@@ -91,17 +91,17 @@ expressApp.use(express.static('html'));
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
 const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
-  winston.info('Sockets server listening on port 8001');
+  logger.info('Sockets server listening on port 8001');
 });
 webSocketServer.on('connection', function connection(conn) {
-  winston.info('connection' + ws);
+  logger.info('connection' + ws);
   conn.on('data', function incoming(data) {
     // Broadcast to everyone else.
     ProcessClientMessage(data, this);
   });
 
   conn.on('close', function () {
-    winston.info('disconnect');
+    logger.info('disconnect');
   });
 });
 
@@ -138,7 +138,7 @@ function GetSession(SessionId) {
     currentSession.gameState = new Object();
     currentSession.topic = "New Topic";
     currentSession.gameState.hidden = true;
-    currentSession.gameState.clientStateArray = new Object();
+    currentSession.gameState.clientStates = new Object();
   }
 
   return currentSession;
@@ -152,6 +152,7 @@ function ProcessClientMessage(m, socket) {
 
   // Write the object to a log
   eventFileStream.write(m + '\n');
+  logger.info(m);
 
   // Extract the client and session id's
   var clientId = message.clientId;
@@ -160,24 +161,24 @@ function ProcessClientMessage(m, socket) {
   var thisSession = GetSession(sessionId);
 
   var gameState = thisSession.gameState;
-  var sessionSockets = thisSession.clientSockets;
+  var clientSockets = thisSession.clientSockets;
 
   // If this is the first message from this client, add the client to the game
-  var thisClientsState = gameState.clientStateArray[clientId];
+  var thisClientsState = gameState.clientStates[clientId];
   if (thisClientsState == undefined) {
     thisClientsState = new Object();
-    gameState.clientStateArray[clientId] = thisClientsState;
+    gameState.clientStates[clientId] = thisClientsState;
   }
 
   // Add the client socket to the state object too
-  sessionSockets[clientId] = socket;
+  clientSockets[clientId] = socket;
 
-  winston.info(m);
+  logger.info(m);
 
   // Clear all of the client blink states so we don't blink 'em twice
 
-  for (var clientId in gameState.clientStateArray) {
-    gameState.clientStateArray[clientId].blink = false;
+  for (var clientId in gameState.clientStates) {
+    gameState.clientStates[clientId].blink = false;
   }
 
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
@@ -211,8 +212,8 @@ function ProcessClientMessage(m, socket) {
     // New vote
     case "CLEARALL":
 
-      for (var clientId in gameState.clientStateArray) {
-        gameState.clientStateArray[clientId].vote = undefined;
+      for (var clientId in gameState.clientStates) {
+        gameState.clientStates[clientId].vote = undefined;
         gameState.topic = "";
       }
       gameState.hidden = true;
@@ -231,19 +232,19 @@ function ProcessClientMessage(m, socket) {
   }
 
   // Let's see if we have consensus, and if we do, set a flag
-  var currentVote = gameState.clientStateArray[0];
+  var currentVote = gameState.clientStates[0];
   var clientCount = 0;
   var consensus = -1;
 
-  for (var clientId in gameState.clientStateArray) {
+  for (var clientId in gameState.clientStates) {
     
     clientCount++;
 
     if (consensus == -1) {
-      currentVote = gameState.clientStateArray[clientId].vote;
+      currentVote = gameState.clientStates[clientId].vote;
       consensus = 1;
     }
-    var vote = gameState.clientStateArray[clientId].vote;
+    var vote = gameState.clientStates[clientId].vote;
     if (vote == undefined || vote != currentVote || vote == '?')
       consensus = 0;
   }
@@ -257,13 +258,13 @@ function ProcessClientMessage(m, socket) {
   sessionCache.set(sessionId, thisSession);
 
   // Broadcast the game state to all listening clients
-  for (var aSocket in sessionSockets) {
-    if (sessionSockets[aSocket].readyState == 1)
-      sessionSockets[aSocket].write(JSON.stringify(gameState));
+  for (var aSocket in clientSockets) {
+    if (clientSockets[aSocket].readyState == 1)
+      clientSockets[aSocket].write(JSON.stringify(gameState));
     else {
       // if socket is closed, remove them from the state.
-      delete gameState.clientStateArray[aSocket];
-      delete sessionSockets[aSocket];
+      delete gameState.clientStates[aSocket];
+      delete clientSockets[aSocket];
     }
   }
 }
@@ -273,16 +274,16 @@ function ProcessClientMessage(m, socket) {
 // a file.  This let's us keep a counter as to how many sessions we've
 // done.
 function ServerShutdown() {
-  winston.info("Received kill signal, shutting down gracefully.");
-  winston.info('Saving sessionId.json');
+  logger.info("Received kill signal, shutting down gracefully.");
+  logger.info('Saving sessionId.json');
   try {
     jsonfile.writeFileSync(sessionFileName, nextSessionId);
-    winston.info('Successfully wrote session file');
+    logger.info('Successfully wrote session file');
 
     eventFileStream.end();
   }
   catch (err) {
-    winston.info('Could not write session file' + err);
+    logger.info('Could not write session file' + err);
   }
   process.exit()
 
