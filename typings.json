@@ -1,0 +1,11 @@
+{
+  "name": "votr",
+  "dependencies": {
+    "cookie-parser": "registry:dt/cookie-parser#1.3.4+20160428043022",
+    "express": "registry:dt/express#4.0.0+20170118060322",
+    "node-cache": "registry:dt/node-cache#3.0.0+20170118061222",
+    "sockjs": "registry:dt/sockjs#0.3.0+20160727214558",
+    "uuid": "registry:npm/uuid#3.0.1+20161206160008",
+    "winston": "registry:dt/winston#2.2.0+20170106144044"
+  }
+}
