@@ -178,12 +178,12 @@ else
 
     var clientBlink = undefined;
 
-    for (var client in gameState.clientStateArray) {
+    for (var client in gameState.clientStates) {
 
         // Server is telling us to blink this guy
 
 
-        state = gameState.clientStateArray[client];
+        state = gameState.clientStates[client];
 
         if (state.blink == true)
             clientBlink = client;
