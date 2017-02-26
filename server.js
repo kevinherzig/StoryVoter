@@ -51,7 +51,7 @@ var pmx = require('pmx').init({
 ///////////////////// logging setup
 
 var logDirectory = "logs/";
-var eventLogName = 'eventLog.json';
+var eventLogName = 'eventLog.txt';
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {'timestamp': true});
 function addFileLogger(err) {
