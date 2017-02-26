@@ -50,19 +50,32 @@ var pmx = require('pmx').init({
 
 ///////////////////// logging setup
 
-var logDirectory = "logs/";
-var eventLogName = 'eventLog.txt';
+let logDirectory = "logs/";
+let eventLogName = "eventLog.txt";
+let logFileSize = 20 * 1024 * 1024;   // 20MB per log file
+let logFileNum = 10; // keep the last 10 logs
+
 logger.remove(logger.transports.Console);
 logger.add(logger.transports.Console, {'timestamp': true});
 function addFileLogger(err) {
-    if (!err || err.code === "EEXIST") {
-        logger.add(logger.transports.File, {'timestamp': true, 'json': false, 'filename': logDirectory + eventLogName});
-    }
-    else {
-        logger.error("There was a problem creating the log directory: " + err.message);
-    }
+  if (!err || err.code === "EEXIST") {
+    logger.add(logger.transports.File,
+      {
+        'timestamp': true,
+        'json': false,
+        'filename': logDirectory + eventLogName,
+        'maxSize': logFileSize,
+        'maxFiles': logFileNum
+      });
+  }
+  else {
+    logger.error("There was a problem creating the log directory: " + err.message);
+  }
 }
+
 fs.mkdir(logDirectory, (err) => addFileLogger());
+
+
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60;
 const sessionCache = new NodeCache({useClones: false, stdTTL: 100, checkperiod: 120});
@@ -200,7 +213,6 @@ function ProcessClientMessage(m, socket) {
   // Add the client socket to the state object too
   clientSockets[clientId] = socket;
 
-  logger.info(m);
 
   // Clear all of the client blink states so we don't blink 'em twice
 
