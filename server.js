@@ -121,9 +121,7 @@ expressApp.use(express.static('html'));
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
-  logger.info('Sockets server listening on port 8001');
-});
+const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' });
 webSocketServer.on('connection', function connection(conn) {
   logger.info('connection' + ws);
   conn.on('data', function incoming(data) {
