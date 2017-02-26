@@ -1,4 +1,3 @@
-
 //  Copyright 2017 Kevin Herzig
 
 //      This program is free software: you can redistribute it and/or modify
@@ -14,6 +13,8 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+////////////////// imports
+
 var express = require('express');
 var path = require('path');
 var ws = require("sockjs");
@@ -26,36 +27,50 @@ const uuidV4 = require('uuid');
 const logger = require('winston');
 
 var pmx = require('pmx').init({
-  http          : true, // HTTP routes logging (default: false) 
-  http_latency  : 200,  // Limit of acceptable latency 
-  http_code     : 500,  // Error code to track' 
-  alert_enabled : true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled) 
-  ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: []) 
-  errors        : true, // Exceptions loggin (default: true) 
-  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true) 
-  network       : true, // Network monitoring at the application level (default: false) 
-  ports         : true, // Shows which ports your app is listening on (default: false), 
- 
-  // Transaction system configuration 
-  transactions  : true,  // Enable transaction tracing (default: false) 
+  http          : true, // HTTP routes logging (default: false)
+  http_latency  : 200,  // Limit of acceptable latency
+  http_code     : 500,  // Error code to track'
+  alert_enabled : true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled)
+  ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: [])
+  errors        : true, // Exceptions loggin (default: true)
+  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true)
+  network       : true, // Network monitoring at the application level (default: false)
+  ports         : true, // Shows which ports your app is listening on (default: false),
+
+  // Transaction system configuration
+  transactions  : true,  // Enable transaction tracing (default: false)
   ignoreFilter: {
     'url': [],
     'method': ['OPTIONS']
   },
-  // can be 'express', 'hapi', 'http', 'restify' 
+  // can be 'express', 'hapi', 'http', 'restify'
   excludedHooks: []
 });
 
+
+///////////////////// logging setup
+
+var logDirectory = "logs/";
+var eventLogName = 'eventLog.json';
 logger.remove(logger.transports.Console);
-logger.add(logger.transports.Console, {'timestamp':true});
+logger.add(logger.transports.Console, {'timestamp': true});
+function addFileLogger(err) {
+    if (!err || err.code === "EEXIST") {
+        logger.add(logger.transports.File, {'timestamp': true, 'json': false, 'filename': logDirectory + eventLogName});
+    }
+    else {
+        logger.error("There was a problem creating the log directory: " + err.message);
+    }
+}
+fs.mkdir(logDirectory, (err) => addFileLogger());
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60;
-const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
+const sessionCache = new NodeCache({useClones: false, stdTTL: 100, checkperiod: 120});
 
+
+///////////////////////////////////// set up session ID counter
 
 var sessionFileName = './sessionId.json';
-var eventLogName = './eventLog.json';
-var eventFileStream = fs.createWriteStream(eventLogName);
 
 //  Read the session id that's persisted if any or use the default of 100
 var nextSessionId = 100;
@@ -97,14 +112,9 @@ expressApp.get("/session/:id", (req, res) => {
   res.sendFile('client.html', { root: '.' });
 });
 
+// Client connected to /session manually, redirct them to a new session id
 expressApp.get('/session', (req, res) => {
   res.redirect('/session/' + nextSessionId++);
-});
-
-// Client connected to /session manually, redirct them to a new session id
-expressApp.get("/session", (req, res) => {
-  const newSession = nextSessionId++;
-  res.redirect('/session/' + newSession);
 });
 
 expressApp.use(express.static('html'));
@@ -172,7 +182,6 @@ function ProcessClientMessage(m, socket) {
   var message = JSON.parse(m);
 
   // Write the object to a log
-  eventFileStream.write(m + '\n');
   logger.info(m);
 
   // Extract the client and session id's
@@ -254,7 +263,7 @@ function ProcessClientMessage(m, socket) {
   var consensus = -1;
 
   for (var clientId in gameState.clientStates) {
-    
+
     clientCount++;
 
     if (consensus == -1) {
@@ -297,7 +306,6 @@ function ServerShutdown() {
     jsonfile.writeFileSync(sessionFileName, nextSessionId);
     logger.info('Successfully wrote session file');
 
-    eventFileStream.end();
   }
   catch (err) {
     logger.info('Could not write session file' + err);
