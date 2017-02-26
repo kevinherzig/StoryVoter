@@ -75,7 +75,7 @@ var sessionFileName = './sessionId.json';
 //  Read the session id that's persisted if any or use the default of 100
 var nextSessionId = 100;
 try {
-  var nextSessionId = jsonfile.readFileSync(sessionFileName);
+  nextSessionId = jsonfile.readFileSync(sessionFileName);
   logger.info('Read session id ' + nextSessionId + ' from sessionId.json');
 }
 catch (err) {
@@ -95,10 +95,9 @@ if (port == undefined)
 if (isNaN(port))
   port = 8000;
 
-expressApp.set('port', port);
 
-var server = http.createServer(expressApp).listen(expressApp.get('port'), function () {
-  logger.info('Express server listening on port ' + expressApp.get('port'));
+var server = http.createServer(expressApp).listen(port, function () {
+  logger.info('Express server listening on port ' + port);
 });
 
 //////////////////////////////////////  Process Routes
@@ -107,7 +106,7 @@ expressApp.get('', (req, res) => {
   res.sendFile('index.html', { root: '.' });
 });
 
-// Client connected to a session, set a cooookie
+// Client connected to a session, set a cookie
 expressApp.get("/session/:id", (req, res) => {
   res.sendFile('client.html', { root: '.' });
 });
