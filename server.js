@@ -1,4 +1,3 @@
-
 //  Copyright 2017 Kevin Herzig
 
 //      This program is free software: you can redistribute it and/or modify
@@ -14,6 +13,8 @@
 //    You should have received a copy of the GNU General Public License
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+////////////////// imports
+
 var express = require('express');
 var path = require('path');
 var ws = require("sockjs");
@@ -26,41 +27,68 @@ const uuidV4 = require('uuid');
 const logger = require('winston');
 
 var pmx = require('pmx').init({
-  http          : true, // HTTP routes logging (default: false) 
-  http_latency  : 200,  // Limit of acceptable latency 
-  http_code     : 500,  // Error code to track' 
-  alert_enabled : true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled) 
-  ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: []) 
-  errors        : true, // Exceptions loggin (default: true) 
-  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true) 
-  network       : true, // Network monitoring at the application level (default: false) 
-  ports         : true, // Shows which ports your app is listening on (default: false), 
- 
-  // Transaction system configuration 
-  transactions  : true,  // Enable transaction tracing (default: false) 
+  http          : true, // HTTP routes logging (default: false)
+  http_latency  : 200,  // Limit of acceptable latency
+  http_code     : 500,  // Error code to track'
+  alert_enabled : true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled)
+  ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: [])
+  errors        : true, // Exceptions loggin (default: true)
+  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true)
+  network       : true, // Network monitoring at the application level (default: false)
+  ports         : true, // Shows which ports your app is listening on (default: false),
+
+  // Transaction system configuration
+  transactions  : true,  // Enable transaction tracing (default: false)
   ignoreFilter: {
     'url': [],
     'method': ['OPTIONS']
   },
-  // can be 'express', 'hapi', 'http', 'restify' 
+  // can be 'express', 'hapi', 'http', 'restify'
   excludedHooks: []
 });
 
+
+///////////////////// logging setup
+
+let logDirectory = "logs/";
+let eventLogName = "eventLog.txt";
+let logFileSize = 20 * 1024 * 1024;   // 20MB per log file
+let logFileNum = 10; // keep the last 10 logs
+
 logger.remove(logger.transports.Console);
-logger.add(logger.transports.Console, {'timestamp':true});
+logger.add(logger.transports.Console, {'timestamp': true});
+function addFileLogger(err) {
+  if (!err || err.code === "EEXIST") {
+    logger.add(logger.transports.File,
+      {
+        'timestamp': true,
+        'json': false,
+        'filename': logDirectory + eventLogName,
+        'maxSize': logFileSize,
+        'maxFiles': logFileNum
+      });
+  }
+  else {
+    logger.error("There was a problem creating the log directory: " + err.message);
+  }
+}
+
+fs.mkdir(logDirectory, (err) => addFileLogger());
+
+
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60;
-const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
+const sessionCache = new NodeCache({useClones: false, stdTTL: 100, checkperiod: 120});
 
+
+///////////////////////////////////// set up session ID counter
 
 var sessionFileName = './sessionId.json';
-var eventLogName = './eventLog.json';
-var eventFileStream = fs.createWriteStream(eventLogName);
 
 //  Read the session id that's persisted if any or use the default of 100
 var nextSessionId = 100;
 try {
-  var nextSessionId = jsonfile.readFileSync(sessionFileName);
+  nextSessionId = jsonfile.readFileSync(sessionFileName);
   logger.info('Read session id ' + nextSessionId + ' from sessionId.json');
 }
 catch (err) {
@@ -80,10 +108,9 @@ if (port == undefined)
 if (isNaN(port))
   port = 8000;
 
-expressApp.set('port', port);
 
-var server = http.createServer(expressApp).listen(expressApp.get('port'), function () {
-  logger.info('Express server listening on port ' + expressApp.get('port'));
+var server = http.createServer(expressApp).listen(port, function () {
+  logger.info('Express server listening on port ' + port);
 });
 
 //////////////////////////////////////  Process Routes
@@ -92,28 +119,21 @@ expressApp.get('', (req, res) => {
   res.sendFile('index.html', { root: '.' });
 });
 
-// Client connected to a session, set a cooookie
+// Client connected to a session, set a cookie
 expressApp.get("/session/:id", (req, res) => {
   res.sendFile('client.html', { root: '.' });
 });
 
+// Client connected to /session manually, redirct them to a new session id
 expressApp.get('/session', (req, res) => {
   res.redirect('/session/' + nextSessionId++);
-});
-
-// Client connected to /session manually, redirct them to a new session id
-expressApp.get("/session", (req, res) => {
-  const newSession = nextSessionId++;
-  res.redirect('/session/' + newSession);
 });
 
 expressApp.use(express.static('html'));
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' }, () => {
-  logger.info('Sockets server listening on port 8001');
-});
+const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' });
 webSocketServer.on('connection', function connection(conn) {
   logger.info('connection' + ws);
   conn.on('data', function incoming(data) {
@@ -172,7 +192,6 @@ function ProcessClientMessage(m, socket) {
   var message = JSON.parse(m);
 
   // Write the object to a log
-  eventFileStream.write(m + '\n');
   logger.info(m);
 
   // Extract the client and session id's
@@ -194,7 +213,6 @@ function ProcessClientMessage(m, socket) {
   // Add the client socket to the state object too
   clientSockets[clientId] = socket;
 
-  logger.info(m);
 
   // Clear all of the client blink states so we don't blink 'em twice
 
@@ -254,7 +272,7 @@ function ProcessClientMessage(m, socket) {
   var consensus = -1;
 
   for (var clientId in gameState.clientStates) {
-    
+
     clientCount++;
 
     if (consensus == -1) {
@@ -297,7 +315,6 @@ function ServerShutdown() {
     jsonfile.writeFileSync(sessionFileName, nextSessionId);
     logger.info('Successfully wrote session file');
 
-    eventFileStream.end();
   }
   catch (err) {
     logger.info('Could not write session file' + err);
