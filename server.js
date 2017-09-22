@@ -131,6 +131,12 @@ expressApp.get('/session', (req, res) => {
 
 expressApp.use(express.static('html'));
 
+expressApp.use(function (err, req, res, next) {
+  logger.error("Error: " + err.message);
+  logger.error("Stack: " + err.stack);
+  next(err);
+})
+
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
 const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' });
