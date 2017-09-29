@@ -26,19 +26,21 @@ var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
 const logger = require('winston');
 
+
+
 var pmx = require('pmx').init({
-  http          : true, // HTTP routes logging (default: false)
-  http_latency  : 200,  // Limit of acceptable latency
-  http_code     : 500,  // Error code to track'
-  alert_enabled : true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled)
-  ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: [])
-  errors        : true, // Exceptions loggin (default: true)
-  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true)
-  network       : true, // Network monitoring at the application level (default: false)
-  ports         : true, // Shows which ports your app is listening on (default: false),
+  http: true, // HTTP routes logging (default: false)
+  http_latency: 200,  // Limit of acceptable latency
+  http_code: 500,  // Error code to track'
+  alert_enabled: true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled)
+  ignore_routes: [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: [])
+  errors: true, // Exceptions loggin (default: true)
+  custom_probes: true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true)
+  network: true, // Network monitoring at the application level (default: false)
+  ports: true, // Shows which ports your app is listening on (default: false),
 
   // Transaction system configuration
-  transactions  : true,  // Enable transaction tracing (default: false)
+  transactions: true,  // Enable transaction tracing (default: false)
   ignoreFilter: {
     'url': [],
     'method': ['OPTIONS']
@@ -56,7 +58,7 @@ let logFileSize = 20 * 1024 * 1024;   // 20MB per log file
 let logFileNum = 10; // keep the last 10 logs
 
 logger.remove(logger.transports.Console);
-logger.add(logger.transports.Console, {'timestamp': true});
+logger.add(logger.transports.Console, { 'timestamp': true });
 function addFileLogger(err) {
   if (!err || err.code === "EEXIST") {
     logger.add(logger.transports.File,
@@ -78,8 +80,8 @@ fs.mkdir(logDirectory, (err) => addFileLogger());
 
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60;
-const sessionCache = new NodeCache({useClones: false, stdTTL: 100, checkperiod: 120});
-
+const sessionCache = new NodeCache({ useClones: false, stdTTL: 100, checkperiod: 120 });
+sessionCache.on( "del", function( key, value ){logger.info('Session expired')});
 
 ///////////////////////////////////// set up session ID counter
 
@@ -160,12 +162,18 @@ webSocketServer.installHandlers(server, { prefix: '/sockets' });
 //////////////////////////////////////  PUSH A NEW COOKIE WITH CLIENT ID 
 function attach_votr_cookie(req, res, next) {
   if (req.cookies.votr_user == undefined)
-    res.cookie("votr_user", uuidV4());
+  {
+    var cookie = uuidV4();
+    logger.info('Pushing client id ' + cookie)
+  res.cookie("votr_user", cookie);
   next();
+  }
 }
 
 //////////////////////////////////////  GET / CREATE SESSION OBJECT
 function GetSession(SessionId) {
+  try {
+    
   var currentSession = sessionCache.get(SessionId);
 
   // If the session is not in the cache, create it
@@ -178,136 +186,148 @@ function GetSession(SessionId) {
 
   // Create the client socket array if necessary
   if (currentSession.clientSockets == undefined)
+  {
+    logger.info('Creating new socket array');
     currentSession.clientSockets = new Object();
+  }
 
   // If the session is new create and initialize the game state
   if (currentSession.gameState == undefined) {
+    logger.info('Creating new gamestate for session ' + sessionId);
     currentSession.gameState = new Object();
     currentSession.topic = "New Topic";
     currentSession.gameState.hidden = true;
     currentSession.gameState.clientStates = new Object();
   }
-
+} catch (error) {
+    logger.error('Error in GetSession - ' + error.message);
+  }
   return currentSession;
 }
 
 //////////////////////////////////////  Message Processing Loop
 function ProcessClientMessage(m, socket) {
 
-  // Convert the JSON message to an object
-  var message = JSON.parse(m);
+  try {
 
-  // Write the object to a log
-  logger.info(m);
+    // Convert the JSON message to an object
+    var message = JSON.parse(m);
 
-  // Extract the client and session id's
-  var clientId = message.clientId;
-  var sessionId = message.sessionId;
+    // Write the object to a log
+    logger.info(m);
 
-  var thisSession = GetSession(sessionId);
+    // Extract the client and session id's
+    var clientId = message.clientId;
+    var sessionId = message.sessionId;
 
-  var gameState = thisSession.gameState;
-  var clientSockets = thisSession.clientSockets;
+    var thisSession = GetSession(sessionId);
 
-  // If this is the first message from this client, add the client to the game
-  var thisClientsState = gameState.clientStates[clientId];
-  if (thisClientsState == undefined) {
-    thisClientsState = new Object();
-    gameState.clientStates[clientId] = thisClientsState;
-  }
+    var gameState = thisSession.gameState;
+    var clientSockets = thisSession.clientSockets;
 
-  // Add the client socket to the state object too
-  clientSockets[clientId] = socket;
+    // If this is the first message from this client, add the client to the game
+    var thisClientsState = gameState.clientStates[clientId];
+    if (thisClientsState == undefined) {
+      thisClientsState = new Object();
+      gameState.clientStates[clientId] = thisClientsState;
+    }
 
-
-  // Clear all of the client blink states so we don't blink 'em twice
-
-  for (var clientId in gameState.clientStates) {
-    gameState.clientStates[clientId].blink = false;
-  }
-
-  //////////////////////////////////////  PAGE MESSAGE GENERATORS
-  //  Client message processor
-  // Process the message and update the game state accordingly
-
-  switch (message.command) {
-
-    // Client is changing their name
-    case "NAME":
-      thisClientsState.name = message.value;
-      break;
-
-    // Client is sending a vote
-    case "VOTE":
-      thisClientsState.vote = message.value;
-      thisClientsState.blink = true;
-      break;
-
-    // Client requesting to show or hide all votes
-    case "SHOWHIDE":
-      gameState.hidden = !gameState.hidden;
-      thisClientsState.blink = true;
-      break;
+    // Add the client socket to the state object too
+    clientSockets[clientId] = socket;
 
 
-    // New vote
-    case "CLEARALL":
+    // Clear all of the client blink states so we don't blink 'em twice
 
-      for (var clientId in gameState.clientStates) {
-        gameState.clientStates[clientId].vote = undefined;
-        gameState.topic = "";
+    for (var clientId in gameState.clientStates) {
+      gameState.clientStates[clientId].blink = false;
+    }
+
+    //////////////////////////////////////  PAGE MESSAGE GENERATORS
+    //  Client message processor
+    // Process the message and update the game state accordingly
+
+    switch (message.command) {
+
+      // Client is changing their name
+      case "NAME":
+        thisClientsState.name = message.value;
+        break;
+
+      // Client is sending a vote
+      case "VOTE":
+        thisClientsState.vote = message.value;
+        thisClientsState.blink = true;
+        break;
+
+      // Client requesting to show or hide all votes
+      case "SHOWHIDE":
+        gameState.hidden = !gameState.hidden;
+        thisClientsState.blink = true;
+        break;
+
+      // New vote
+      case "CLEARALL":
+
+        for (var clientId in gameState.clientStates) {
+          gameState.clientStates[clientId].vote = undefined;
+          gameState.topic = "";
+        }
+        gameState.hidden = true;
+
+        thisClientsState.blink = true;
+        break;
+
+      // Client is changing the topic
+      case "TOPIC":
+        gameState.topic = message.value;
+        break;
+
+      // Client is pinging the server to keep socket connection alive
+      case "PING":
+        break;
+    }
+
+    // Let's see if we have consensus, and if we do, set a flag
+    var currentVote = gameState.clientStates[0];
+    var clientCount = 0;
+    var consensus = -1;
+
+    for (var clientId in gameState.clientStates) {
+
+      clientCount++;
+
+      if (consensus == -1) {
+        currentVote = gameState.clientStates[clientId].vote;
+        consensus = 1;
       }
-      gameState.hidden = true;
-
-      thisClientsState.blink = true;
-      break;
-
-    // Client is changing the topic
-    case "TOPIC":
-      gameState.topic = message.value;
-      break;
-
-    // Client is pinging the server to keep socket connection alive
-    case "PING":
-      break;
-  }
-
-  // Let's see if we have consensus, and if we do, set a flag
-  var currentVote = gameState.clientStates[0];
-  var clientCount = 0;
-  var consensus = -1;
-
-  for (var clientId in gameState.clientStates) {
-
-    clientCount++;
-
-    if (consensus == -1) {
-      currentVote = gameState.clientStates[clientId].vote;
-      consensus = 1;
+      var vote = gameState.clientStates[clientId].vote;
+      if (vote == undefined || vote != currentVote || vote == '?')
+        consensus = 0;
     }
-    var vote = gameState.clientStates[clientId].vote;
-    if (vote == undefined || vote != currentVote || vote == '?')
-      consensus = 0;
-  }
 
-  gameState.consensus = ((consensus == 1) && (clientCount > 1));
+    gameState.consensus = ((consensus == 1) && (clientCount > 1));
 
-  // This tells the clients who sent the update
-  gameState.lastClientUpdate = clientId;
+    // This tells the clients who sent the update
+    gameState.lastClientUpdate = clientId;
 
-  // Update the cache - not sure if this is needed
-  sessionCache.set(sessionId, thisSession);
+    // Update the cache - not sure if this is needed
+    sessionCache.set(sessionId, thisSession);
 
-  // Broadcast the game state to all listening clients
-  for (var aSocket in clientSockets) {
-    if (clientSockets[aSocket].readyState == 1)
-      clientSockets[aSocket].write(JSON.stringify(gameState));
-    else {
-      // if socket is closed, remove them from the state.
-      delete gameState.clientStates[aSocket];
-      delete clientSockets[aSocket];
+    // Broadcast the game state to all listening clients
+    for (var aSocket in clientSockets) {
+      if (clientSockets[aSocket].readyState == 1)
+        clientSockets[aSocket].write(JSON.stringify(gameState));
+      else {
+        // if socket is closed, remove them from the state.
+        delete gameState.clientStates[aSocket];
+        delete clientSockets[aSocket];
+      }
     }
+  } catch (error) {
+  logger.error("Error: " + err.message);
+  logger.error("Stack: " + err.stack);
   }
+
 }
 
 //////////////////////////////////////////////////////////////////  SERVER SHUTDOWN
