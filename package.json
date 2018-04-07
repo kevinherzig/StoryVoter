@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "cookie-parser": "^1.4.3",
+    "debug-trace": "^2.2.1",
     "express": "^4.14.0",
     "jsonfile": "^2.4.0",
     "node-cache": "^4.1.1",

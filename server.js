@@ -14,7 +14,10 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ////////////////// imports
-
+require('debug-trace')({
+  always: true,
+});
+const logger = require('winston');
 var express = require('express');
 var path = require('path');
 var ws = require("sockjs");
@@ -24,29 +27,6 @@ var http = require('http');
 var fs = require('fs');
 var cookieParser = require('cookie-parser');
 const uuidV4 = require('uuid');
-const logger = require('winston');
-
-var pmx = require('pmx').init({
-  http          : true, // HTTP routes logging (default: false)
-  http_latency  : 200,  // Limit of acceptable latency
-  http_code     : 500,  // Error code to track'
-  alert_enabled : true,  // Enable alerts (If you add alert subfield in custom it's going to be enabled)
-  ignore_routes : [/socket\.io/, /notFound/], // Ignore http routes with this pattern (default: [])
-  errors        : true, // Exceptions loggin (default: true)
-  custom_probes : true, // Auto expose JS Loop Latency and HTTP req/s as custom metrics (default: true)
-  network       : true, // Network monitoring at the application level (default: false)
-  ports         : true, // Shows which ports your app is listening on (default: false),
-
-  // Transaction system configuration
-  transactions  : true,  // Enable transaction tracing (default: false)
-  ignoreFilter: {
-    'url': [],
-    'method': ['OPTIONS']
-  },
-  // can be 'express', 'hapi', 'http', 'restify'
-  excludedHooks: []
-});
-
 
 ///////////////////// logging setup
 
@@ -92,7 +72,7 @@ try {
   logger.info('Read session id ' + nextSessionId + ' from sessionId.json');
 }
 catch (err) {
-  logger.info('Could not read session file, defaulting to 100')
+  logger.info('Could not read session file, defaulting to 100');
 }
 
 //////////////////////////////////////  EXPRESS SERVER STARTUP
@@ -135,7 +115,7 @@ expressApp.use(function (err, req, res, next) {
   logger.error("Error: " + err.message);
   logger.error("Stack: " + err.stack);
   next(err);
-})
+});
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
@@ -170,22 +150,22 @@ function GetSession(SessionId) {
 
   // If the session is not in the cache, create it
   if (currentSession == undefined) {
-    currentSession = new Object();
+    currentSession = {};
 
     // Place the object into the cache
-    sessionCache.set(SessionId, currentSession)
+    sessionCache.set(SessionId, currentSession);
   }
 
   // Create the client socket array if necessary
   if (currentSession.clientSockets == undefined)
-    currentSession.clientSockets = new Object();
+    currentSession.clientSockets = {};
 
   // If the session is new create and initialize the game state
   if (currentSession.gameState == undefined) {
-    currentSession.gameState = new Object();
+    currentSession.gameState = {};
     currentSession.topic = "New Topic";
     currentSession.gameState.hidden = true;
-    currentSession.gameState.clientStates = new Object();
+    currentSession.gameState.clientStates = {};
   }
 
   return currentSession;
@@ -212,7 +192,7 @@ function ProcessClientMessage(m, socket) {
   // If this is the first message from this client, add the client to the game
   var thisClientsState = gameState.clientStates[clientId];
   if (thisClientsState == undefined) {
-    thisClientsState = new Object();
+    thisClientsState = {};
     gameState.clientStates[clientId] = thisClientsState;
   }
 
@@ -222,8 +202,8 @@ function ProcessClientMessage(m, socket) {
 
   // Clear all of the client blink states so we don't blink 'em twice
 
-  for (var clientId in gameState.clientStates) {
-    gameState.clientStates[clientId].blink = false;
+  for (var thisClientId in gameState.clientStates) {
+    gameState.clientStates[thisClientId].blink = false;
   }
 
   //////////////////////////////////////  PAGE MESSAGE GENERATORS
@@ -253,8 +233,8 @@ function ProcessClientMessage(m, socket) {
     // New vote
     case "CLEARALL":
 
-      for (var clientId in gameState.clientStates) {
-        gameState.clientStates[clientId].vote = undefined;
+      for (var thisClientId2 in gameState.clientStates) {
+        gameState.clientStates[thisClientId2].vote = undefined;
         gameState.topic = "";
       }
       gameState.hidden = true;
@@ -277,15 +257,15 @@ function ProcessClientMessage(m, socket) {
   var clientCount = 0;
   var consensus = -1;
 
-  for (var clientId in gameState.clientStates) {
+  for (var thisClientId3 in gameState.clientStates) {
 
     clientCount++;
 
     if (consensus == -1) {
-      currentVote = gameState.clientStates[clientId].vote;
+      currentVote = gameState.clientStates[thisClientId3].vote;
       consensus = 1;
     }
-    var vote = gameState.clientStates[clientId].vote;
+    var vote = gameState.clientStates[thisClientId3].vote;
     if (vote == undefined || vote != currentVote || vote == '?')
       consensus = 0;
   }
@@ -325,7 +305,7 @@ function ServerShutdown() {
   catch (err) {
     logger.info('Could not write session file' + err);
   }
-  process.exit()
+  process.exit();
 
 }
 
