@@ -14,9 +14,10 @@
 //    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 ////////////////// imports
-require('debug-trace')({
-  always: true,
-});
+// require('debug-trace')({
+//  always: true,
+// });
+
 const logger = require('winston');
 var express = require('express');
 var path = require('path');
