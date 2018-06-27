@@ -59,7 +59,7 @@ fs.mkdir(logDirectory, (err) => addFileLogger());
 
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60;
-const sessionCache = new NodeCache({useClones: false, stdTTL: 100, checkperiod: 120});
+const sessionCache = new NodeCache({useClones: false, stdTTL: sessionExpire, checkperiod: 120});
 
 
 ///////////////////////////////////// set up session ID counter
