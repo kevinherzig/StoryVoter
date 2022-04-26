@@ -18,7 +18,7 @@
 //  always: true,
 // });
 
-const logger = require('winston');
+const winston = require('winston');
 var express = require('express');
 var path = require('path');
 var ws = require("sockjs");
@@ -31,35 +31,23 @@ const uuidV4 = require('uuid');
 
 ///////////////////// logging setup
 
-let logDirectory = "logs/";
-let eventLogName = "eventLog.txt";
-let logFileSize = 20 * 1024 * 1024;   // 20MB per log file
-let logFileNum = 10; // keep the last 10 logs
-
-logger.remove(logger.transports.Console);
-logger.add(logger.transports.Console, {'timestamp': true});
-function addFileLogger(err) {
-  if (!err || err.code === "EEXIST") {
-    logger.add(logger.transports.File,
-      {
-        'timestamp': true,
-        'json': false,
-        'filename': logDirectory + eventLogName,
-        'maxSize': logFileSize,
-        'maxFiles': logFileNum
-      });
-  }
-  else {
-    logger.error("There was a problem creating the log directory: " + err.message);
-  }
-}
-
-fs.mkdir(logDirectory, (err) => addFileLogger());
-
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  defaultMeta: { service: 'user-service' },
+  transports: [
+    //
+    // - Write all logs with importance level of `error` or less to `error.log`
+    // - Write all logs with importance level of `info` or less to `combined.log`
+    //
+    new winston.transports.File({ filename: 'error.log', level: 'error' }),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
 
 // 3 Hour expiration time
 const sessionExpire = 3 * 60 * 60;
-const sessionCache = new NodeCache({useClones: false, stdTTL: sessionExpire, checkperiod: 120});
+const sessionCache = new NodeCache({ useClones: false, stdTTL: sessionExpire, checkperiod: 120 });
 
 
 ///////////////////////////////////// set up session ID counter
@@ -141,7 +129,7 @@ webSocketServer.installHandlers(server, { prefix: '/sockets' });
 //////////////////////////////////////  PUSH A NEW COOKIE WITH CLIENT ID 
 function attach_votr_cookie(req, res, next) {
   if (req.cookies.votr_user == undefined)
-    res.cookie("votr_user", uuidV4());
+    res.cookie("votr_user", uuidV4.v4());
   next();
 }
 
