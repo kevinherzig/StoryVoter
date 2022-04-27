@@ -4,15 +4,13 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-
         {
             "type": "node",
             "request": "launch",
             "name": "Launch Server",
             "program": "${workspaceRoot}/server.js",
             "cwd": "${workspaceRoot}",
-        "trace": true
-
+            "trace": true
         },
         {
             "name": "Launch Client",
@@ -22,5 +20,4 @@
             "url": "http://localhost:8000/session/1"
         }
     ]
-
 }

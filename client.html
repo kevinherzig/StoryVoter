@@ -23,7 +23,7 @@
 <html lang="en">
 
 <head title="Story Voter - Online Planning Poker">
-    <meta name="keywords" content="planning poker, agile, voting "/>
+    <meta name="keywords" content="planning poker, agile, voting " />
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -42,165 +42,172 @@
 </head>
 
 <body onload="InitDocument();">
-<div class="container">
-    <div class="row" style="margin-top: 15px; margin-bottom: 5px;" id="header">
-        <div class="col-sm-12 text-center"><img src="/votr2.png" class="img-fluid" style="max-width: 100%"></div>
-    </div>
-    <div class="row" id="serverInfo">
-        <div class="col-sm-12 text-center">
-            <div class="row" style="margin-top: 0px; margin-bottom: 0px;">
-                <H4><span class="text-center label label-default" id="sessionId">Session</span></H4>
-            </div>
-            <div class="row" style="margin-top: 0px; margin-bottom: 15px;">
-                <H4><span class="text-center label label-med label-danger" style="width: auto;"
-                          id='serverConnectionStatus'> Not
-                Connected
-                </span></H4>
+    <div class="container">
+        <div class="row" style="margin-top: 15px; margin-bottom: 5px;" id="header">
+            <div class="col-sm-12 text-center"><img src="/votr2.png" class="img-fluid" style="max-width: 100%"></div>
+        </div>
+        <div class="row" id="serverInfo">
+            <div class="col-sm-12 text-center">
+                <div class="row" style="margin-top: 0px; margin-bottom: 0px;">
+                    <H4><span class="text-center label label-default" id="sessionId">Session</span></H4>
+                </div>
+                <div class="row" style="margin-top: 0px; margin-bottom: 15px;">
+                    <H4><span class="text-center label label-med label-danger" style="width: auto;"
+                            id='serverConnectionStatus'> Not
+                            Connected
+                        </span></H4>
+                </div>
             </div>
         </div>
-    </div>
 
-    <div class="row" id="mainBody">
-        <div class="col-sm-6" style="padding-left: 5%;padding-right: 5%" id="colVoter">
-            <div class="row" id="rowName">
-                <form class="form-horizontal" role="form">
-                    <div class="form-group">
-                        <label class="control-label col-sm-3" for="txtName">My Name:</label>
-                        <div class="col-sm-9">
-                            <input type="text" class="form-control" id="txtName" onkeyup="SendName(this.value)">
+        <div class="row" id="mainBody">
+            <div class="col-sm-6" style="padding-left: 5%;padding-right: 5%" id="colVoter">
+                <div class="row" id="rowName">
+                    <form class="form-horizontal" role="form">
+                        <div class="form-group">
+                            <label class="control-label col-sm-3" for="txtName">My Name:</label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="txtName" onkeyup="SendName(this.value)">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="row" id="rowVoteLabel">
+                    <div class="col text-center">Vote by clicking one of the buttons below!</div>
+                </div>
+                <div id="buttonStrips">
+                    <div class="row" id="rowZeroToFive">
+                        <div class="col-xs-2" style="padding: 5px;" id="col0Button">
+                            <button onclick="SendVote(this.value);" value="0" class="btn btn-primary btn-sm btn-block">0
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="colOneHalfButton">
+                            <button onclick="SendVote(this.value);" value="1/2"
+                                class="btn btn-primary btn-sm btn-block">1/2
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col1Button">
+                            <button onclick="SendVote(this.value);" value="1" class="btn btn-primary btn-sm btn-block">1
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col2Button">
+                            <button onclick="SendVote(this.value);" value="2" class="btn btn-primary btn-sm btn-block">2
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col3Button">
+                            <button onclick="SendVote(this.value);" value="3" class="btn btn-primary btn-sm btn-block">3
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col5Button">
+                            <button onclick="SendVote(this.value);" value="5" class="btn btn-primary btn-sm btn-block">5
+                            </button>
                         </div>
                     </div>
-                </form>
-            </div>
-            <div class="row" id="rowVoteLabel">
-                <div class="col text-center">Vote by clicking one of the buttons below!</div>
-            </div>
-            <div id="buttonStrips">
-                <div class="row" id="rowZeroToFive">
-                    <div class="col-xs-2" style="padding: 5px;" id="col0Button">
-                        <button onclick="SendVote(this.value);" value="0" class="btn btn-primary btn-sm btn-block">0
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="colOneHalfButton">
-                        <button onclick="SendVote(this.value);" value="1/2" class="btn btn-primary btn-sm btn-block">1/2
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col1Button">
-                        <button onclick="SendVote(this.value);" value="1" class="btn btn-primary btn-sm btn-block">1
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col2Button">
-                        <button onclick="SendVote(this.value);" value="2" class="btn btn-primary btn-sm btn-block">2
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col3Button">
-                        <button onclick="SendVote(this.value);" value="3" class="btn btn-primary btn-sm btn-block">3
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col5Button">
-                        <button onclick="SendVote(this.value);" value="5" class="btn btn-primary btn-sm btn-block">5
-                        </button>
-                    </div>
-                </div>
-                <p>
-                <div class="row" id="rowEightAndAbove">
-                    <div class="col-xs-2" style="padding: 5px;" id="col8Button">
-                        <button onclick="SendVote(this.value);" value="8" class="btn btn-primary btn-sm btn-block">8
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col13Button">
-                        <button onclick="SendVote(this.value);" value="13" class="btn btn-primary btn-sm btn-block">13
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col20Button">
-                        <button onclick="SendVote(this.value);" value="20" class="btn btn-primary btn-sm btn-block">20
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col40Button">
-                        <button onclick="SendVote(this.value);" value="40" class="btn btn-primary btn-sm btn-block">40
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="col100Button">
-                        <button onclick="SendVote(this.value);" value="100" class="btn btn-primary btn-sm btn-block">100
-                        </button>
-                    </div>
-                    <div class="col-xs-2" style="padding: 5px;" id="colInfButton">
-                        <button onclick="SendVote(this.value);" value="Infinity"
+                    <p>
+                    <div class="row" id="rowEightAndAbove">
+                        <div class="col-xs-2" style="padding: 5px;" id="col8Button">
+                            <button onclick="SendVote(this.value);" value="8" class="btn btn-primary btn-sm btn-block">8
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col13Button">
+                            <button onclick="SendVote(this.value);" value="13"
+                                class="btn btn-primary btn-sm btn-block">13
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col20Button">
+                            <button onclick="SendVote(this.value);" value="20"
+                                class="btn btn-primary btn-sm btn-block">20
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col40Button">
+                            <button onclick="SendVote(this.value);" value="40"
+                                class="btn btn-primary btn-sm btn-block">40
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="col100Button">
+                            <button onclick="SendVote(this.value);" value="100"
+                                class="btn btn-primary btn-sm btn-block">100
+                            </button>
+                        </div>
+                        <div class="col-xs-2" style="padding: 5px;" id="colInfButton">
+                            <button onclick="SendVote(this.value);" value="Infinity"
                                 class="btn btn-primary btn-sm btn-block">
-                            Infinity
-                        </button>
+                                Infinity
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <div class="col-sm-6" style="padding-left: 5%;padding-right: 5%" id="colResults">
-            <div class="row">
-                <div class="col-sm-2">
-                    <label class="">Vote Topic:</label>
+            <div class="col-sm-6" style="padding-left: 5%;padding-right: 5%" id="colResults">
+                <div class="row">
+                    <div class="col-sm-2">
+                        <label class="">Vote Topic:</label>
+                    </div>
+                    <div class="col-sm-8">
+                        <textarea class="form-control" id="txtTopic"></textarea>
+                    </div>
+                    <div class="col-sm-2">
+                        <button onclick="SendTopic($('#txtTopic').val());">Submit</button>
+                    </div>
                 </div>
-                <div class="col-sm-8">
-                    <textarea class="form-control" id="txtTopic"></textarea>
+                <div class="row" id="displayTopic">
+                    <div class="col">
+                        <div class="text-center">
+                            <div id='topic' style="font-weight: bold; background: black; color: white">No Topic</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="col-sm-2">
-                    <button onclick="SendTopic($('#txtTopic').val());">Submit</button>
+                <div class="row" id="rowConsenus">
+                    <div class="col">
+                        <div class="text-center">
+                            <div id='consensus' style="font-weight: bold;"></div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="row" id="displayTopic">
-                <div class="col">
-                    <div class="text-center">
-                        <div id='topic' style="font-weight: bold; background: black; color: white">No Topic</div>
+                <div class="row" id="rowResult">
+                    <table class="table table-bordered table-sm" style="table-layout: fixed">
+                        <thead class="thead-inverse">
+                            <tr>
+                                <th>Name</th>
+                                <th>Vote</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" style="border: 5px">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="row" id="rowResultButtons">
+                    <div class="col-xs-4">
+                        <button class="btn btn-success btn-sm btn-block" onclick="SendShowHide();">Show/Hide
+                            Votes</button>
+                    </div>
+                    <div class="col-xs-4"></div>
+                    <div class="col-xs-4">
+                        <button class="btn btn-danger btn-sm btn-block" onclick="SendClearAll();">Clear All</button>
                     </div>
                 </div>
             </div>
-            <div class="row" id="rowConsenus">
-                <div class="col">
-                    <div class="text-center">
-                        <div id='consensus' style="font-weight: bold;"></div>
-                    </div>
-                </div>
-            </div>
-            <div class="row" id="rowResult">
-                <table class="table table-bordered table-sm" style="table-layout: fixed">
-                    <thead class="thead-inverse">
-                    <tr>
-                        <th>Name</th>
-                        <th>Vote</th>
-                    </tr>
-                    </thead>
-                    <tbody id="tableBody" style="border: 5px">
-                    </tbody>
-                </table>
-            </div>
-            <div class="row" id="rowResultButtons">
-                <div class="col-xs-4">
-                    <button class="btn btn-success btn-sm btn-block" onclick="SendShowHide();">Show/Hide Votes</button>
-                </div>
-                <div class="col-xs-4"></div>
-                <div class="col-xs-4">
-                    <button class="btn btn-danger btn-sm btn-block" onclick="SendClearAll();">Clear All</button>
-                </div>
-            </div>
+
         </div>
 
+        <div class="panel-footer" style="padding-top: 50px;">
+            <footer class="footer">
+                <div class="text-center">
+                    <p><span style="color: darkgray">Submit bug or feature requests at <a
+                                href="https://github.com/kevinherzig/StoryVoter">GitHub</a></span>
+                    <p><span class="" style="font-size: 12px; color: darkgray">StoryVoter.com by Kevin Herzig, Bob
+                            Boring</span>
+                </div>
+            </footer>
+        </div>
     </div>
-
-    <div class="panel-footer" style="padding-top: 50px;">
-        <footer class="footer">
-            <div class="text-center">
-                <p><span style="color: darkgray">Submit bug or feature requests at <a
-                        href="https://github.com/kevinherzig/StoryVoter">GitHub</a></span>
-                <p><span class="" style="font-size: 12px; color: darkgray">StoryVoter.com by Kevin Herzig, Bob Boring</span>
-            </div>
-        </footer>
-    </div>
-</div>
-<script src="/js/jquery-3.1.1.min.js"></script>
-<script src="/js/jquery-ui.min.js"></script>
-<script src="/js/tether.min.js"></script>
-<script src="/js/bootstrap.min.js"></script>
-<script src="/js/js.cookie.js"></script>
-<script src="/js/sockjs.min.js"></script>
-<script src="/js/client.js"></script>
+    <script src="/js/jquery-3.1.1.min.js"></script>
+    <script src="/js/jquery-ui.min.js"></script>
+    <script src="/js/tether.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/js.cookie.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+    <script src="/js/client.js"></script>
 </body>
 
 </html>
