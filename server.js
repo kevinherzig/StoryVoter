@@ -109,7 +109,7 @@ expressApp.use(function (err, req, res, next) {
 
 //////////////////////////////////////  SOCKET SERVER STARTUP
 
-const webSocketServer = new ws.createServer({ sockjs_url: 'http://cdn.jsdelivr.net/sockjs/1.0.1/sockjs.min.js' });
+const webSocketServer = new ws.createServer({ sockjs_url: 'https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js' });
 webSocketServer.on('connection', function connection(conn) {
   logger.info('connection' + ws);
   conn.on('data', function incoming(data) {
