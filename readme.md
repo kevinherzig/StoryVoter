@@ -7,6 +7,8 @@ An open source voting machine for Agile Teams.
 
 I wrote StoryVoter to help teams run games of "planning poker" in a fast, efficient, and fun manner.  There are some great sites on the internet for this, but I thought it might be helpful to have an open source version with the soruce code available for those that may have limitations on connectivity such as teams with heavy offshore dependencies.
 
+You can try this out at http://storyvoter.herzig.net
+
 ## Technology
 
 StoryVoter uses a NodeJS server which serves up client pages that interact live with the server.  The glue back and forth is the excellent [SockJS] (https://github.com/sockjs) library which automaticall selects a lowest common denominator push or emulation pattern.  There is no long term persistence of session data beyond the client event log.
@@ -37,10 +39,10 @@ If you wish to run the server on a privledged port (such as the default http por
 
 The server writes to two files.
 
-File  | Purpose
-------------- | -------------
-eventLog.json  | A log of all client messages
-sessionId.json  | The next session id so that session numbers are persisted during server recycle
+| File           | Purpose                                                                         |
+| -------------- | ------------------------------------------------------------------------------- |
+| eventLog.json  | A log of all client messages                                                    |
+| sessionId.json | The next session id so that session numbers are persisted during server recycle |
 
 You can watch the client activity on your server by issuing the command
 
